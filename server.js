@@ -1,32 +1,25 @@
-const express = require('express');
-const http = require('http');
-const socketIo = require('socket.io');
-const path = require('path');
+const express = require("express");
+const dotenv = require("dotenv");
+dotenv.config();
+const cors = require("cors");
+const connectDB = require("./db/db");
+const port = process.env.PORT;
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
-const server = http.createServer(app);
-const io = socketIo(server);
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
-io.on('connection', (socket) => {
-    let username;
+// Serve static files from the 'public' directory
+app.use(express.static('public'));
 
-    socket.on('login', (user) => {
-        username = user;
-        console.log(`${username} has joined the chat`);
-    });
 
-    socket.on('chat message', (msg) => {
-        io.emit('chat message', { username: username, message: msg });
-    });
+app.use("/api", authRoutes);
 
-    socket.on('disconnect', () => {
-        console.log(`${username} has left the chat`);
-    });
-});
+connectDB();
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+app.listen(port, () => {
+  console.log(`Server running on port: ${port}`);
 });
