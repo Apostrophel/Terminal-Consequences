@@ -15,14 +15,13 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
+    //origin: '*', // Allow all origins for development
     origin: 'https://terminal-6xn7.onrender.com', // Allow only your deployed domain
     methods: ["GET", "POST"]
   }
 });
 
-server.listen(port, () => {
-  console.log(`io Listening on port : ${port}`);
-});
+
 
 app.use(cors({
   //origin: '*', // Allow all origins for development
@@ -41,10 +40,10 @@ io.on('connection', (socket) => {
   console.log('New client connected');
 
   // Add event listeners here, e.g.:
-  socket.on('message', (msg) => {
-    console.log('Message received:', msg);
+  socket.on('chat message', (msg) => {
+    //console.log('Message received:', msg); //Only for development
     // Broadcast message to all clients
-    io.emit('message', msg);
+    io.emit('chat message', msg);
   });
 
   socket.on('disconnect', () => {
@@ -56,6 +55,11 @@ io.on('connection', (socket) => {
 app.use("/api", authRoutes);
 
 connectDB();
+
+
+server.listen(port, () => {
+  console.log(`io Listening on port : ${port}`);
+});
 
 // app.listen(port, () => {
 //   console.log(`Server running on port: ${port}`);

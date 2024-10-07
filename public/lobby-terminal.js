@@ -1,5 +1,5 @@
-//const socket = io('http://localhost:5000', {transports: ['websocket']});
-const socket = io('https://terminal-6xn7.onrender.com', {transports: ['websocket', 'polling']});
+//const socket = io('http://localhost:5000', {transports: ['websocket', 'polling']});                     //FOR LOCALHOST
+const socket = io('https://terminal-6xn7.onrender.com', {transports: ['websocket', 'polling']});      // FOR DEPLOYMENT
 
 
 socket.on('connect', () => {
@@ -52,7 +52,7 @@ const commands = {
             socket.emit('chat message', chatMessage);               //sends the message to all connected clients.
             //socket.broadcast.emit('chat message', chatMessage);   //sends the message to all clients except the one that sent the message.
 
-            term.echo(`[[;green;]${username}]: ${message}`);
+            //term.echo(`[[;green;]${username}]: ${message}`);
         } else {
             term.echo('Please log in to chat.');
         }
@@ -103,7 +103,7 @@ const username = localStorage.getItem('username');
 function ready() {
     term.echo(() => {
         term.echo(() => render('Terminal Consequences'))
-        .echo(`[[;white;]YOU ARE LOGGED IN AS] <red>${username}</red> <white> ... Welcome to the manor.</white> \n`).resume();
+        .echo(`<white>YOU ARE LOGGED IN AS </white> <red>${username}</red> <white> ... Welcome to the chat.</white> \n`).resume();
       });
 }
 
