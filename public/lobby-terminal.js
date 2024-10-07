@@ -1,3 +1,27 @@
+
+//const socket = io();  // Connect to WebSocket server
+ const socket = io('https://terminal-6xn7.onrender.com', {
+     transports: ['websocket'] // Try adding 'polling' if websocket fails
+});
+
+//const socket = io('http://localhost:5000', {transports: ['websocket']});
+
+
+socket.on('connect', () => {
+    console.log('Successfully connected to the Socket.IO server');
+});
+
+socket.on('connect_error', (err) => {
+    console.error('Connection Error:', err);
+    console.log(err.message);
+
+    // some additional description, for example the status code of the initial HTTP response
+    console.log(err.description);
+  
+    // some additional context, for example the XMLHttpRequest object
+    console.log(err.context);
+});
+
 const formatter = new Intl.ListFormat('en', {
     style: 'long',
     type: 'conjunction',
@@ -24,11 +48,30 @@ const commands = {
         setTimeout(() => {
             window.location.href = 'index.html'; // Replace with your login page URL
         }, 500); // 1 second delay for user feedback before redirecting
-    }
+    },
 
+    say(message) {
+        const username = localStorage.getItem('username');
+        if (username && message) {
+            const chatMessage = `${username}: ${message}`;
+            socket.emit('chat message', chatMessage);
+            term.echo(`[[;green;]You]: ${message}`);
+        } else {
+            term.echo('Please log in and provide a message.');
+        }
+    },
+    
 
 
 };
+
+// Listen for messages from other users
+socket.on('chat message', (msg) => {
+    term.echo(msg);
+});
+
+
+
 
 const command_list = ['clear'].concat(Object.keys(commands));
 const formatted_list = command_list.map(cmd => {

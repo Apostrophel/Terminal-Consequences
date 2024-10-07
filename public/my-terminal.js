@@ -63,46 +63,137 @@ const commands = {
         });
     },
 
-
-    login() {
-        term.read('Username: ').then(username => {
-            term.read('Password: ', { echo: false }).then(password => {
-                // Now you have both username and password
-                term.echo('Logging in...');
-
-                // Make the API call to login
-                fetch('/api/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ username, password })
-                })
-                .then(response => response.json())
-                .then(result => {
-                    if (result.token) {
-                        term.echo('Login successful! Token: ' + result.token);
-                        
-                        // Additional actions on login success, such as storing token
+    login(username, password) {
+        if (username && password) {
+            password = String(password);
+            // If both username and password are provided, use them directly
+            term.echo('Logging in with provided credentials...');
+    
+            // Make the API call to login
+            fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.token) {
+                    term.echo('Login successful! Token: ' + result.token);
+                    
+                    // Store the username in localStorage
+                    localStorage.setItem('username', result.username);
+                
+                    // Redirect to the lobby
+                    window.location.href = 'lobby.html';
+                } else {
+                    term.error(result.error || 'Login failed!');
+                }
+            })
+            .catch(error => {
+                term.error('An error occurred: ' + error.message);
+            });
+        } else {
+            // If any parameter is missing, prompt for the username and/or password
+            if (!username) {
+                term.read('Username: ').then(inputUsername => {
+                    if (!password) {
+                        term.read('Password: ', { echo: false }).then(inputPassword => {
+                            term.echo('Logging in...');
+    
+                            // Make the API call to login
+                            fetch('/api/login', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({ username: inputUsername, password: inputPassword })
+                            })
+                            .then(response => response.json())
+                            .then(result => {
+                                if (result.token) {
+                                    term.echo('Login successful! Token: ' + result.token);
+                                    
+                                    // Store the username in localStorage
+                                    localStorage.setItem('username', result.username);
+                                
+                                    // Redirect to the lobby
+                                    window.location.href = 'lobby.html';
+                                } else {
+                                    term.error(result.error || 'Login failed!');
+                                }
+                            })
+                            .catch(error => {
+                                term.error('An error occurred: ' + error.message);
+                            });
+                        });
+                    } else {
+                        term.echo('Logging in with provided username and password...');
+    
+                        // Make the API call to login
+                        fetch('/api/login', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ username: inputUsername, password })
+                        })
+                        .then(response => response.json())
+                        .then(result => {
+                            if (result.token) {
+                                term.echo('Login successful! Token: ' + result.token);
+                                
+                                // Store the username in localStorage
+                                localStorage.setItem('username', result.username);
+                            
+                                // Redirect to the lobby
+                                window.location.href = 'lobby.html';
+                            } else {
+                                term.error(result.error || 'Login failed!');
+                            }
+                        })
+                        .catch(error => {
+                            term.error('An error occurred: ' + error.message);
+                        });
+                    }
+                });
+            } else {
+                // If username is provided but password is missing, prompt for password
+                term.read('Password: ', { echo: false }).then(inputPassword => {
+                    term.echo('Logging in...');
+    
+                    // Make the API call to login
+                    fetch('/api/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ username, password: inputPassword })
+                    })
+                    .then(response => response.json())
+                    .then(result => {
                         if (result.token) {
+                            term.echo('Login successful! Token: ' + result.token);
+                            
                             // Store the username in localStorage
                             localStorage.setItem('username', result.username);
                         
-                            // Redirect to the dashboard
+                            // Redirect to the lobby
                             window.location.href = 'lobby.html';
+                        } else {
+                            term.error(result.error || 'Login failed!');
                         }
-
-                    } else {
-                        term.error(result.error || 'Login failed!');
-                    }
-                })
-                .catch(error => {
-                    term.error('An error occurred: ' + error.message);
-
+                    })
+                    .catch(error => {
+                        term.error('An error occurred: ' + error.message);
+                    });
                 });
-            });
-        });
+            }
+        }
     }
+
+    
 };
 
 const command_list = ['clear'].concat(Object.keys(commands));
