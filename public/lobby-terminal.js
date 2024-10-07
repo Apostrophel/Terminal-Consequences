@@ -1,5 +1,3 @@
-const { user } = require("../db/config");
-
 //const socket = io('http://localhost:5000', {transports: ['websocket']});
 const socket = io('https://terminal-6xn7.onrender.com', {transports: ['websocket', 'polling']});
 
@@ -51,7 +49,9 @@ const commands = {
         const username = localStorage.getItem('username');
         if (username && message) {
             const chatMessage = `${username}: ${message}`;
-            socket.emit('chat message', chatMessage);
+            socket.emit('chat message', chatMessage);               //sends the message to all connected clients.
+            //socket.broadcast.emit('chat message', chatMessage);   //sends the message to all clients except the one that sent the message.
+
             term.echo(`[[;green;]${username}]: ${message}`);
         } else {
             term.echo('Please log in to chat.');
