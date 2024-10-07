@@ -1,10 +1,6 @@
 
-//const socket = io();  // Connect to WebSocket server
- const socket = io('https://terminal-6xn7.onrender.com', {
-     transports: ['websocket'] // Try adding 'polling' if websocket fails
-});
-
 //const socket = io('http://localhost:5000', {transports: ['websocket']});
+const socket = io('https://terminal-6xn7.onrender.com', {transports: ['websocket']});
 
 
 socket.on('connect', () => {

@@ -13,10 +13,20 @@ const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = socketIo(server, {
+  cors: {
+    origin: 'https://terminal-6xn7.onrender.com', // Allow only your deployed domain
+    methods: ["GET", "POST"]
+  }
+});
+
+server.listen(port, () => {
+  console.log(`io Listening on port : ${port}`);
+});
 
 app.use(cors({
-  origin: '*', // Allow all origins for development
+  //origin: '*', // Allow all origins for development
+  origin: 'https://terminal-6xn7.onrender.com', // Allow only your deployed domain
   methods: ["GET", "POST"]
 }));
 
@@ -25,12 +35,6 @@ app.use(express.urlencoded({ extended: false }));
 
 // Serve static files from the 'public' directory
 app.use(express.static('public'));
-
-
-// app.get('/socket.io/socket.io.js', (req, res) => {
-//   console.log('Socket.IO client script requested');
-//   res.sendFile(require.resolve('socket.io-client/dist/socket.io.js'));
-// });
 
 // Socket.IO connection
 io.on('connection', (socket) => {
@@ -53,7 +57,7 @@ app.use("/api", authRoutes);
 
 connectDB();
 
-app.listen(port, () => {
-  console.log(`Server running on port: ${port}`);
-});
+// app.listen(port, () => {
+//   console.log(`Server running on port: ${port}`);
+// });
 
