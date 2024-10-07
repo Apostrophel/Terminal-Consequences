@@ -1,6 +1,7 @@
+const { user } = require("../db/config");
 
 //const socket = io('http://localhost:5000', {transports: ['websocket']});
-const socket = io('https://terminal-6xn7.onrender.com', {transports: ['websocket']});
+const socket = io('https://terminal-6xn7.onrender.com', {transports: ['websocket', 'polling']});
 
 
 socket.on('connect', () => {
@@ -51,9 +52,9 @@ const commands = {
         if (username && message) {
             const chatMessage = `${username}: ${message}`;
             socket.emit('chat message', chatMessage);
-            term.echo(`[[;green;]You]: ${message}`);
+            term.echo(`[[;green;]${username}]: ${message}`);
         } else {
-            term.echo('Please log in and provide a message.');
+            term.echo('Please log in to chat.');
         }
     },
     
@@ -65,8 +66,6 @@ const commands = {
 socket.on('chat message', (msg) => {
     term.echo(msg);
 });
-
-
 
 
 const command_list = ['clear'].concat(Object.keys(commands));
@@ -82,8 +81,6 @@ const re = new RegExp(`^\s*(${command_list.join('|')})(\s?.*)`);
 $.terminal.new_formatter([re, function(_, command, args) {
     return `<white>${command}</white><aqua>${args}</aqua>`;
 }]);
-
-
 
 
  
@@ -106,7 +103,7 @@ const username = localStorage.getItem('username');
 function ready() {
     term.echo(() => {
         term.echo(() => render('Terminal Consequences'))
-        .echo(`[[;white;]YOU ARE LOGGED IN] <red>${username}</red> \n`).resume();
+        .echo(`[[;white;]YOU ARE LOGGED IN AS] <red>${username}</red> <white> ... Welcome to the manor.</white> \n`).resume();
       });
 }
 
