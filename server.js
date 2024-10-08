@@ -75,6 +75,13 @@ io.on('connection', (socket) => {
     io.emit('chat message', msg);
   });
 
+  socket.on('whisper message', (user, msg) =>{
+    console.log('whisper received:', user, msg); //Only for development
+
+    io.emit('whisper message', user, msg);
+
+  });
+
 
    // CREATE GAME LOBBY: 
    // Handle inviting users to the game lobby

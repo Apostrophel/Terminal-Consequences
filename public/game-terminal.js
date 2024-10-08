@@ -131,13 +131,6 @@ const commands = {
 
     },
 
-    whisper(to_username, message){
-        const username = localStorage.getItem('username');
-        const whisperMessage = `${timestamp}  ${username} whispers: \t\t<pink>${message}</pink>`;
-        socket.emit('whisper message', to_username, whisperMessage);               //sends the message to all connected clients.
-
-    },
-
     // Command to create a game
     creategame() {
     socket.emit('creategame', username, (response) => {
@@ -153,12 +146,6 @@ socket.on('chat message', (msg) => {
     term.echo(msg);
 });
 
-socket.on('whisper message', (usr, msg) => {
-    const username = localStorage.getItem('username');
-    if (usr === username){
-        term.echo(msg);
-    }
-});
 
 
 
