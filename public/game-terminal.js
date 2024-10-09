@@ -139,8 +139,8 @@ const commands = {
             if(variable === 'users'){
                 if (location === 'in lobby' || location === 'lobby'){
                     socket.emit('get room users', roomId, (callback) => {
-                        lobby_clients = callback.join(', ');
-                        term.echo(`Users in lobby: ${lobby_clients}`);
+                        const lobby_clients = Object.keys(callback).join(', ');  // Join the keys of the object (usernames)
+                        term.echo(`Players in lobby: ${lobby_clients}`);
                     });
                 } else {
                     term.echo(`<red>Invalid argument: </red> ${location} `)
@@ -150,19 +150,35 @@ const commands = {
         } else if (variable === "users") {
             
             socket.emit('requestUserList', (users) => {
-                if (users.length > 0) {
-                    userList = users.join(', ');
+                if (Object.keys(users).length > 0) { // Use Object.keys() for an object or .length for an array
+                    const userList = Object.keys(users).join(', ');  // Join the keys of the object (usernames)
                     term.echo(`Currently logged in users: ${userList}`);
-        
                 } else {
                     term.echo('No users are currently logged in.');
                 }
+            });
+
+        } else if (variable === 'roles') {
+            socket.emit('get room users', roomId, (users) => {
+                
+                const lobbyClients = Object.keys(users).map(username => {
+                    const role = users[username].role; // Access the role associated with the username
+                    return `${username} (${role})`; // Format the output
+                });
+            
+                // Join the array into a string and echo it
+                term.echo(`Player roles in lobby: ${lobbyClients.join(', ')}`);
+
             });
 
         } else {
             term.echo('Use command: list <parameter> <location>');
         }
 
+    },
+
+    who() {
+        this.exec('list users lobby');
     },
 
     whisper(to_username, message){
@@ -179,8 +195,9 @@ const commands = {
     
     invite(user){
         socket.emit('requestUserList', (users) => {
-            if (users.includes(user)) {
-                socket.emit('invite', roomId, user, username, (callback) => {
+            //if (users.includes(user)) {
+            if (users[user]){
+                    socket.emit('invite', roomId, user, username, (callback) => {
                     term.echo(callback)
                 });
             }else {
@@ -245,7 +262,9 @@ function ready() {
       });
 
     socket.emit('get room users', roomId, (callback) => {
-        lobby_clients = callback.join(', ');
+        //lobby_clients = callback.join(', ');
+        const lobby_clients = Object.keys(callback).join(', ');  // Join the keys of the object (usernames)
+
         term.echo(`<green>Game Lobby: </green>Users in lobby: ${lobby_clients}`);
     });
 }

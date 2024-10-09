@@ -45,9 +45,6 @@ const io = socketIo(server, {
   cors: corsOptions // Reuse the same CORS options for Socket.IO
 });
 
-
-
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -57,44 +54,25 @@ app.use(express.static('public'));
 
 const users = {}; // Array to store logged-in users
 const rooms = {}; // Store rooms with the users inside them
-
+ 
 
 // Socket.IO connection
 io.on('connection', (socket) => {
   console.log('New client connected');
   socket.on('userLogin', (username) => {
     users[username] = socket.id;
-
-    // if (!users.includes(username)) {
-    //     users.push(username); 
-    // }
-
-    console.log("login: ", username, ". Users: ", users)
+    //console.log("login: ", username, ". Users: ", users)
 
   });
 
   socket.on('userLogout', user_name => {
-
-      //rooms[room_id] = rooms[room_id].filter(currentUser => currentUser !== user);
-      console.log("logout: ", user_name, ". Useres b: ", users)
-      
-
-      // const index = users.indexOf(user_name);
-      // if (index !== -1) {
-      //     users.splice(index, 1);
-      // }
-
-      if (users[user_name]) {
+    if (users[user_name]) {
         delete users[user_name]; // This removes both the username and the associated socket ID
     }
-       
-      console.log("Useres aft: ", users)
-
- 
+    //console.log("Useres aft: ", users)
   });
 
   socket.on('requestUserList', (callback) => {
-    console.log("USER LIST REQUESTED: ", users);
     callback(users);
   });
 
@@ -118,8 +96,16 @@ io.on('connection', (socket) => {
     const newRoomId = nanoid(4); // Generates a unique ID like "V1StG4h"
     //const newRoomId = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 8); // 8 is the length of the ID
 
-    rooms[newRoomId] = []; // Initialize the array for users in this room
-     
+    rooms[newRoomId] = {
+        settings: {
+          host: username,
+          gameName: `${username}'s Game`, // Default game name
+          maxPlayers: 4, // Example of a default setting
+          isStarted: false // Game state
+        },
+        users: {}, // Store users and their roles
+    };
+
     socket.join(newRoomId); // Join the room with the unique ID
     console.log(`${username} created and joined room: ${newRoomId}`);
 
@@ -139,10 +125,16 @@ io.on('connection', (socket) => {
 
   // Handle joining a game lobby
   socket.on('joinGame', (roomId, username, callback) => {
-      console.log("User joined game", roomId, " ", username);
+      //console.log("User joined game", roomId, " ", username);
       if (rooms[roomId]) {
           socket.join(roomId);
-          rooms[roomId].push(username); // Add the user to the room
+          //rooms[roomId].push(username); // Add the user to the room
+
+          if (Object.keys(rooms[roomId].users).length === 0){
+            rooms[roomId].users[username] = { role: 'host' }; // or any role or data associated with the user
+          } else { 
+            rooms[roomId].users[username] = { role: 'guest' }; // or any role or data associated with the user
+          }
           callback(`Joined game lobby: ${roomId}`);
           io.to(roomId).emit('gameMessage', `<green>Game Lobby: </green>${username} has joined the game lobby!`);   //TODO: Where is this emitted to?
       } else {
@@ -152,17 +144,18 @@ io.on('connection', (socket) => {
 
   // Handle chat messages within a game lobby
   socket.on('gameMessage', (roomId, message) => {
-      console.log(`Server recieved game message: ${roomId}, ${message}`)
+      //console.log(`Server recieved game message: ${roomId}, ${message}`)
       io.to(roomId).emit('gameMessage', message); // Broadcast to everyone in the room
   });
 
   socket.on('get room users', (room_id, callback) => {
-      callback(rooms[room_id]);
+      callback(rooms[room_id].users);
   });
 
   socket.on('userLeft', (user, room_id) => {
 
-    rooms[room_id] = rooms[room_id].filter(currentUser => currentUser !== user);
+    //rooms[room_id] = rooms[room_id].filter(currentUser => currentUser !== user);
+    delete rooms[room_id].users[user];
 
     broadcast_message = `<green>Game Lobby:</green> ${user} has left the game lobby.`
     io.to(room_id).emit('gameMessage', broadcast_message); // Broadcast to everyone in the room

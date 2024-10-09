@@ -1,4 +1,3 @@
- 
 // Determine if we are in development or production based on the window location
 const isDevelopment = window.location.hostname === 'localhost'; 
 
@@ -98,13 +97,9 @@ const commands = {
 
     say(message) {
         const username = localStorage.getItem('username');
-
         if (username && message) {
             const chatMessage = `${timestamp}  ${username}:\t\t${message}`;
-
-            // Send the message to other clients
             socket.emit('chat message', chatMessage);
-
         } else if (message == null) {
             term.echo('Please provide message.');
         } else {
@@ -118,7 +113,6 @@ const commands = {
             
             socket.emit('requestUserList', (users) => {
  
-
                 if (Object.keys(users).length > 0) { // Use Object.keys() for an object or .length for an array
                     const userList = Object.keys(users).join(', ');  // Join the keys of the object (usernames)
                     term.echo(`Currently logged in users: ${userList}`);
@@ -131,6 +125,10 @@ const commands = {
             term.echo('list what?');
         }
 
+    },
+
+    who() {
+        this.exec('list users'); 
     },
 
     whisper(to_username, message){
@@ -173,15 +171,7 @@ socket.on('whisper message', (usr, msg) => {
 });
 
 socket.on('invitation', (invited_user, hostUser, room_id) => {
-    const username = localStorage.getItem('username');
-    //console.log(invited_user, " has been invited to ", room_id )
-    
-    // const accept = confirm(`${hostUser} has invited you to join room ${room_id}. Do you want to join?`);
-    // if (accept) {
-    //     window.location.href = `/game.html?roomId=${room_id}`;
-    // }
-
-    term.echo(`[[;yellow;]${hostUser} has invited you to join room ${room_id}. Click here to join: [[!;;;;/game.html?roomId=${room_id}]Join Room]]`);
+    term.echo(`[[;yellow;]${hostUser} has invited you to join room ${room_id}. Click here to [[!;;;;/game.html?roomId=${room_id}]Join Room]]`);
 });
 
 
