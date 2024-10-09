@@ -217,64 +217,8 @@ const formatted_list = command_list.map(cmd => {
 const help = formatter.format(formatted_list);
 
 const any_command_re = new RegExp(`^\s*(${command_list.join('|')})`);
- 
 const re = new RegExp(`^\s*(${command_list.join('|')})(\s?.*)`);
 
-// $.terminal.new_formatter([re, function(_, command, args) {
-//     return `<white>${command}</white><aqua>${args}</aqua>`;
-
-// }]);
-
-
-
- 
-let password_listen = false;
-
- 
-
-if (password_listen){
-    $.terminal.new_formatter([re, function(_, command, args) {
-        const argsArray = args.trim().split(/\s+/); // Split arguments by spaces and trim
-        const [firstArg, secondArg, thirdArg,...rest] = argsArray; // Destructure the arguments
-
-        if (argsArray.length < 2 ){
-            return `<white>${command}</white><aqua>${args}</aqua>`;
-        
-        } else if(argsArray.length === 2){
-            return `<white>${command}</white> <aqua>${firstArg}</aqua> <green>${secondArg}</green>`;
-    
-        } else if(argsArray.length === 3){
-            return `<white>${command}</white> <aqua>${firstArg}</aqua> <green>${secondArg}</green> <yellow>${thirdArg}</yellow>`;
-        
-        } else { 
-
-            let formattedArgs = '';
-            if (firstArg) {
-                formattedArgs += `<aqua>${firstArg}</aqua> `;
-            }
-            if (secondArg) {
-                formattedArgs += `<green>${secondArg}</green> `
-            }
-            if (thirdArg) {
-                formattedArgs += `<yellow>${thirdArg}</yellow> `; // Add space only if there's a first argument
-            }
-            if (rest.length > 0) {
-                //formattedArgs += ` <yellow>${rest.join(' ')}</yellow>`; // Any remaining arguments in yellow
-                formattedArgs += (formattedArgs ? ' ' : '') + `<yellow>${rest.join(' ')}</yellow>`; // Add space only if previous arguments exist
-            }
-        
-            return `<white>${command}</white> ${formattedArgs}`;
-        }
-    }]); 
-} else {
-    $.terminal.new_formatter([re, function(_, command, args) {
-        return `<white>${command}</white><aqua>${args}</aqua>`;
-    }]);
-}
-
-
-
- 
 const font = 'Bloody';  // https://patorjk.com/software/taag/#p=display&f=Bloody&t=Terminal%20Consequences <-- for more fonts ascii art
 
 figlet.defaults({ fontPath: 'https://unpkg.com/figlet/fonts/' });
@@ -336,79 +280,30 @@ let user_pass_buffer = '';
 let username_temp = '';
 let login_listen = true;
 let space_counter = 0;
-
 let temp_password = '';
 
 term.on('keydown', function(e) {
-    
-    // if (space_counter === 2 && password_listen){
-
-
-    //     if (e.key === 'Enter'){
-    //         term.echo('Logging in with provided credentials...');
-
-    //         // Make the API call to login
-    //         fetch('/api/login', {
-    //             method: 'POST',
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //             },
-    //             body: JSON.stringify({ username_temp, user_pass_buffer })
-    //         })
-    //         .then(response => response.json())
-    //         .then(result => {
-    //             if (result.token) {
-    //                 term.echo('Login successful! Token: ' + result.token);
-                    
-    //                 // Store the username in localStorage
-    //                 localStorage.setItem('username', result.username_temp);
-                
-    //                 // Redirect to the lobby
-    //                 window.location.href = 'lobby.html';
-    //             } else {
-    //                 term.error(result.error || 'Login failed!');
-    //             }
-    //         })
-    //         .catch(error => {
-    //             term.error('An error occurred: ' + error.message);
-    //         });
-    //     }
-    // } else {
-
-        if (e.key === 'Enter') {
-            inputBuffer = '';
-            user_pass_buffer = '';
-            username_temp = '';
-            login_listen = true;
-            password_listen = false;
-            space_counter = 0;
-       }
-   
-    //}
+    if (e.key === 'Enter') {
+        inputBuffer = '';
+        user_pass_buffer = '';
+        username_temp = '';
+        login_listen = true;
+        password_listen = false;
+        space_counter = 0;
+    }
 });
-
-
-
-// Capture keydown events
+ 
 term.on('keydown', function(e) {
-
     // console.log(`inputBuffer: ${inputBuffer}`)
     // console.log(`user_pass_buffer, ${user_pass_buffer}`)
     // console.log(`username_temp: ${username_temp}`)
     // console.log(`temp_password, ${temp_password}`)
     // console.log(`space_counter: ${space_counter}`)
 
-    
-
-
-
     // Check if the key pressed is a printable character or space
-    if (e.key.length === 1 || e.key === ' ') {
-        
-        if (login_listen){
-        
+    if (e.key.length === 1 || e.key === ' ') {       
+        if (login_listen){       
             inputBuffer += e.key;  // Accumulate input
-            // Check if the inputBuffer matches "login "
             if (inputBuffer === 'login ') {
 
                 login_listen = false;
@@ -450,23 +345,6 @@ term.on('keydown', function(e) {
 
             }  
         }
-
-        // if(password_listen){
-        //     if (space_counter === 1){
-        //         username_temp += e.key;
-        //     }
-
-        //     if (e.key === ' '){
-        //         space_counter += 1;
-        //     }
-
-        //     if (space_counter === 2 ){
-        //         user_pass_buffer += e.key;
-            
-                
-        //     }
-
-        // }
 
     } else if (e.key === 'Backspace') {
         // Handle backspace to remove last character

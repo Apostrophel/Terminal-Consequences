@@ -6,23 +6,30 @@ const socket = io(isDevelopment ? 'http://localhost:5000' : 'https://terminal-6x
     transports: ['websocket', 'polling'] // Use both websocket and polling transports
 });
 
-socket.on('connect', () => {
-    console.log('Successfully connected to the Socket.IO server');
-    
-    const username = localStorage.getItem('username');
-    socket.emit('userLogin', username);
 
+// Extract the roomId from the URL (e.g., /game/:roomId)
+const urlParams = new URLSearchParams(window.location.search);
+const roomId = urlParams.get('roomId'); // Extracts the value of 'roomId' parameter
+console.log(roomId); // Outputs: ZayB
+
+const username = localStorage.getItem('username');
+
+socket.emit('joinGame', roomId, username, (response) => {
+    console.log(`In Game Response: ${response}`); // Log the response from the server
+});
+
+socket.on('connect', () => {
+    console.log('Successfully connected to the Socket.IO server and game lobby');
+        const username = localStorage.getItem('username');
+
+    socket.emit('userLogin', username);                     //TODO: Change to userJoin
 
 });
 
 socket.on('connect_error', (err) => {
     console.error('Connection Error:', err);
     console.log(err.message);
-
-    // some additional description, for example the status code of the initial HTTP response
     console.log(err.description);
-  
-    // some additional context, for example the XMLHttpRequest object
     console.log(err.context);
 });
 
@@ -33,7 +40,12 @@ const formatter = new Intl.ListFormat('en', {
   
   
 let chatMode = false;
-let timestamp = new Date().toLocaleTimeString(); // 11:18:48 AM
+let timestamp = new Date().toLocaleTimeString(); // 11:18:48
+
+//game settings:
+let lobby_name = 'Game Lobby';
+//...
+
 
 const commands = {
     help(command_name) {
@@ -91,8 +103,19 @@ const commands = {
         }, 500); // 1 second delay for user feedback before redirecting
     },
 
+    leave() {
+        term.echo('You have left the game, bye!');
+        const username = localStorage.getItem('username');
+        socket.emit('userLeft', username, roomId);
+
+        setTimeout(() => {
+            window.location.href = 'lobby.html'; // Replace with your login page URL
+        }, 500); // 1 second delay for user feedback before redirecting
+
+    },
+
     exit: function() {  // Define exit as a function reference
-        this.exec('logout'); // Call logout when exit is invoked
+        this.exec('leave'); // Call logout when exit is invoked
     },
 
     say(message) {
@@ -100,8 +123,8 @@ const commands = {
 
         if (username && message) {
             const chatMessage = `${timestamp}  ${username}:\t\t${message}`;
-            socket.emit('chat message', chatMessage);               //sends the message to all connected clients.
-            //term.echo(`[[;green;]${username}]: ${message}`);
+            //socket.emit('chat message', chatMessage);               //sends the message to all connected clients.
+            socket.emit('gameMessage', roomId, chatMessage); //Send message with roomId                                //TODO: Change to ***character name***
 
         } else if (message == null) {
             term.echo('Please provide message.');
@@ -110,45 +133,80 @@ const commands = {
         }
     },
 
-    list(variable) {
+    list(variable, location) {
 
-        if (variable === "users") {
+        if (location){
+            if(variable === 'users'){
+                if (location === 'in lobby' || location === 'lobby'){
+                    socket.emit('get room users', roomId, (callback) => {
+                        lobby_clients = callback.join(', ');
+                        term.echo(`Users in lobby: ${lobby_clients}`);
+                    });
+                } else {
+                    term.echo(`<red>Invalid argument: </red> ${location} `)
+                }
+            }
+                
+        } else if (variable === "users") {
             
             socket.emit('requestUserList', (users) => {
                 if (users.length > 0) {
-                    term.echo('Currently logged in users:');
-                    users.forEach(user => {
-                        term.echo(user);
-                    });
+                    userList = users.join(', ');
+                    term.echo(`Currently logged in users: ${userList}`);
+        
                 } else {
                     term.echo('No users are currently logged in.');
                 }
             });
 
         } else {
-            term.echo('list what?');
+            term.echo('Use command: list <parameter> <location>');
         }
 
     },
 
-    // Command to create a game
-    creategame() {
-    socket.emit('creategame', username, (response) => {
-        term.echo(response); // Show the room ID or any feedback
-    });
-}
+    whisper(to_username, message){
+        const username = localStorage.getItem('username');
+        const whisperMessage = `${timestamp}  ${username} whispers: \t\t<pink>${message}</pink>`;
+        socket.emit('whisper message', to_username, whisperMessage);               //sends the message to all connected clients.
 
+    },
+
+    setname(new_name){
+        lobby_name = new_name;
+        this.exec('refresh');
+    },
+    
+    invite(user){
+        socket.emit('requestUserList', (users) => {
+            if (users.includes(user)) {
+                socket.emit('invite', roomId, user, username, (callback) => {
+                    term.echo(callback)
+                });
+            }else {
+                term.echo(`<red>Error:</red> ${user} is offline or does not exist.`)
+            }
+    
+        });
+       
+    }
 
 };
 
-// Listen for messages from other users
-socket.on('chat message', (msg) => {
-    term.echo(msg);
+// Listen for game messages and display them
+socket.on('gameMessage', msg => {
+    console.log(`Received from server: ${msg}`)
+    //if (room === roomId){
+        term.echo(msg);
+    //}
 });
 
-
-
-
+socket.on('whisper message', (usr, msg) => {
+    const username = localStorage.getItem('username');
+    if (usr === username){
+        term.echo(msg);
+    }
+});
 
 const command_list = ['clear'].concat(Object.keys(commands));
 const formatted_list = command_list.map(cmd => {
@@ -165,9 +223,7 @@ $.terminal.new_formatter([re, function(_, command, args) {
 }]);
 
 
-const username = localStorage.getItem('username');
-
-const font = 'Bloody';  // https://patorjk.com/software/taag/#p=display&f=Bloody&t=Terminal%20Consequences <-- for more fonts ascii art
+const font = 'Elite';  // https://patorjk.com/software/taag/#p=display&f=Bloody&t=Terminal%20Consequences <-- for more fonts ascii art
 
 figlet.defaults({ fontPath: 'https://unpkg.com/figlet/fonts/' });
 figlet.preloadFonts([font], ready);
@@ -177,18 +233,21 @@ const term = $('body').terminal(commands, {
     checkArity: false,
     exit: false,
     completion: true,
-    prompt: `<white>${username}</white>@tq.lobby> `
+    prompt: `<white>${username}</white>@tq.game> `
 });
 
 //term.pause();
 
-
-
 function ready() {
     term.echo(() => {
-        term.echo(() => render('Terminal Consequences'))
-        .echo(`<white>YOU ARE LOGGED IN AS </white> <red>${username}</red> <white> ... Welcome to the chat.</white> \n`).resume();
+        term.echo(() => render(`Terminal Consequences: ${lobby_name}`))  
+        .echo(`<white> User: </white> <red>${username}</red> <white> ... Welcome to Game: ${lobby_name}.</white> \n`).resume(); //TODO: lobby name and id below
       });
+
+    socket.emit('get room users', roomId, (callback) => {
+        lobby_clients = callback.join(', ');
+        term.echo(`<green>Game Lobby: </green>Users in lobby: ${lobby_clients}`);
+    });
 }
 
 function render(text) {
@@ -213,7 +272,7 @@ function hex(color) {
     }).join('');
 }
 
- 
+
 
 term.on('click', '.command', function() {
     const command = $(this).text();

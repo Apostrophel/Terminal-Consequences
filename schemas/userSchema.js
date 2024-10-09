@@ -8,4 +8,4 @@ const userSchema = `
 `;
 
 module.exports = userSchema;
-
+//export default userSchema;

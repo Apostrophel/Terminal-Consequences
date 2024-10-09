@@ -1,3 +1,4 @@
+ 
 // Determine if we are in development or production based on the window location
 const isDevelopment = window.location.hostname === 'localhost'; 
 
@@ -79,11 +80,11 @@ const commands = {
     },
 
     logout() {
+        const username = localStorage.getItem('username');
         localStorage.removeItem('username');
         localStorage.removeItem('token');
         term.echo('You have been logged out successfully, bye!');
 
-        const username = localStorage.getItem('username');
         socket.emit('userLogout', username);                        //TODO: Do this also for disconnect etc ????
 
         setTimeout(() => {
@@ -100,8 +101,9 @@ const commands = {
 
         if (username && message) {
             const chatMessage = `${timestamp}  ${username}:\t\t${message}`;
-            socket.emit('chat message', chatMessage);               //sends the message to all connected clients.
-            //term.echo(`[[;green;]${username}]: ${message}`);
+
+            // Send the message to other clients
+            socket.emit('chat message', chatMessage);
 
         } else if (message == null) {
             term.echo('Please provide message.');
@@ -115,11 +117,11 @@ const commands = {
         if (variable === "users") {
             
             socket.emit('requestUserList', (users) => {
-                if (users.length > 0) {
-                    term.echo('Currently logged in users:');
-                    users.forEach(user => {
-                        term.echo(user);
-                    });
+ 
+
+                if (Object.keys(users).length > 0) { // Use Object.keys() for an object or .length for an array
+                    const userList = Object.keys(users).join(', ');  // Join the keys of the object (usernames)
+                    term.echo(`Currently logged in users: ${userList}`);
                 } else {
                     term.echo('No users are currently logged in.');
                 }
@@ -140,10 +142,20 @@ const commands = {
 
     // Command to create a game
     creategame() {
-    socket.emit('creategame', username, (response) => {
-        term.echo(response); // Show the room ID or any feedback
-    });
-}
+        socket.emit('creategame', username, (response) => {
+            
+            //console.log(`Game created at: ${response}`)
+            term.echo(`Game created at: ${response}`); // Show the room ID or any feedback
+            // Redirect to game.html with the new room ID as a query parameter
+            window.location.href = `game.html?roomId=${response.split('/').pop()}`; // Extract the room ID from the response
+
+        });
+
+    },
+    // join(room_id){
+    //     socket.emit('joinGame', username, room_id (response) => {
+    //     window.location.href = `game.html?roomId=${response.split('/').pop()}`; // Extract the room ID from the response
+    // }
 
 
 };
@@ -160,6 +172,17 @@ socket.on('whisper message', (usr, msg) => {
     }
 });
 
+socket.on('invitation', (invited_user, hostUser, room_id) => {
+    const username = localStorage.getItem('username');
+    //console.log(invited_user, " has been invited to ", room_id )
+    
+    // const accept = confirm(`${hostUser} has invited you to join room ${room_id}. Do you want to join?`);
+    // if (accept) {
+    //     window.location.href = `/game.html?roomId=${room_id}`;
+    // }
+
+    term.echo(`[[;yellow;]${hostUser} has invited you to join room ${room_id}. Click here to join: [[!;;;;/game.html?roomId=${room_id}]Join Room]]`);
+});
 
 
 
@@ -190,16 +213,16 @@ const term = $('body').terminal(commands, {
     checkArity: false,
     exit: false,
     completion: true,
-    prompt: `<white>${username}</white>@tq.lobby> `
+    prompt: `<white>${username}</white>@tq.lobby> `,
+    history: true
 });
 
 //term.pause();
 
 
-
 function ready() {
     term.echo(() => {
-        term.echo(() => render('Terminal Consequences'))
+        term.echo(() => render('Terminal Consequences: '))       
         .echo(`<white>YOU ARE LOGGED IN AS </white> <red>${username}</red> <white> ... Welcome to the chat.</white> \n`).resume();
       });
 }
@@ -246,9 +269,53 @@ term.on('click', '.command', function() {
     }
 });
 
-
 socket.on('disconnect', () => {                                 //TODO: This dosnnt work? 
     const username = localStorage.getItem('username');
     console.log(`Client disconnected: ${username}`);        
     socket.emit('userLogout', username);
 });
+
+
+
+// let say_listen = true;
+// let inputBuffer = [];
+
+
+// term.on('keydown', function(e) {
+
+//     if (e.key === 'Enter') {
+//         term.set_prompt(`<white>${username}</white>@tq.lobby> `);
+//         say_listen = true;
+//         inputBuffer = [];
+//         $.terminal.new_formatter([re, function(_, command, args) {
+//             return `<white>${command}</white><aqua>${args}</aqua>`;
+//         }]);
+//      }
+// });
+
+
+// term.on('keydown', function(e) {
+//     console.log(inputBuffer);
+ 
+//     // Check if the key pressed is a printable character or space
+//     if (e.key.length === 1 || e.key === ' ') {       
+//         if (say_listen){       
+//             inputBuffer += e.key;  // Accumulate input
+//             if (inputBuffer === 'say ') {
+
+//                 say_listen = false;
+                 
+//                 $.terminal.new_formatter([re, function(_, command, args) {
+//                     term.set_prompt(' ');
+//                     return ' '
+//                 }]); 
+
+//             }  
+//         }
+//     } else if (e.key === 'Backspace') {
+//         // Handle backspace to remove last character
+//         inputBuffer = inputBuffer.slice(0, -1);
+        
+//     }
+// });
+ 

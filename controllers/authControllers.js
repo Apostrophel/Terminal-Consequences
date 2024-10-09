@@ -3,10 +3,17 @@ const jwt = require("jsonwebtoken");
 const userSchema = require("../schemas/userSchema");
 const bcrypt = require("bcryptjs");
 const {
-  createTable,
-  checkRecordExists,
-  insertRecord,
-} = require("../utils/sqlFunctions");
+   createTable,
+   checkRecordExists,
+   insertRecord,
+  } = require("../utils/sqlFunctions");
+
+
+// import { v4 as uuidv4 } from 'uuid';
+// import jwt from 'jsonwebtoken';
+// import userSchema from '../schemas/userSchema.js'
+// import bcrypt from 'bcryptjs/dist/bcrypt.js';
+// import {createTable, checkRecordExists, insertRecord} from '../utils/sqlFunctions.js'
 
 const generateAccessToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -110,3 +117,4 @@ module.exports = {
 };
 
 
+//export {register, login};

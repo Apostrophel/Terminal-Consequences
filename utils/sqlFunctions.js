@@ -1,5 +1,9 @@
 const mysql = require("mysql2");
 const config = require("../db/config");
+
+//import mysql from 'mysql2';
+//import config from '../db/config.js'
+
 const pool = mysql.createPool(config);
 
 const createTable = (schema) => {
@@ -43,8 +47,9 @@ const insertRecord = (tableName, record) => {
 };
 
 module.exports = {
-  createTable,
-  checkRecordExists,
-  insertRecord,
+   createTable,
+   checkRecordExists,
+   insertRecord,
 };
 
+//export {createTable, checkRecordExists, insertRecord}; // Use 'export default' instead of 'module.exports'

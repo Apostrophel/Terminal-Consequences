@@ -5,5 +5,5 @@ const config = {
     database: process.env.DATABASE,
   };
   
-  module.exports = config;
-  
+module.exports = config;
+//export default config; // Use 'export default' instead of 'module.exports'

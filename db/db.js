@@ -2,6 +2,9 @@
 const mysql = require("mysql2");
 const config = require("./config");
 
+//import mysql from 'mysql2';
+//import config from './config.js'
+
 const connectDB = async () => {
   const pool = mysql.createPool(config);
 
@@ -19,4 +22,4 @@ const connectDB = async () => {
 
 module.exports = connectDB;
 
-
+//export default connectDB;
