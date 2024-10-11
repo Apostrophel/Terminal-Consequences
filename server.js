@@ -151,6 +151,9 @@ io.on('connection', (socket) => {
   socket.on('get room users', (room_id, callback) => {
       callback(rooms[room_id].users);
   });
+  socket.on('getUserData', (user_id, room_id, callback) => {
+      callback(rooms[room_id].users[user_id])
+  });
 
   socket.on('userLeft', (user, room_id) => {
 
@@ -183,5 +186,12 @@ app.get('/game/:roomId', (req, res) => {
 
 
 server.listen(port, () => {
+  if(isDevelopment){
+    console.log(`Open at: http://localhost:${port}`)
+  }else{
+    console.log('Deployed.')
+  }
+  console.log(`Open at: http://localhost:${port}`)
+
   console.log(`io Listening on port : ${port}`);
 });

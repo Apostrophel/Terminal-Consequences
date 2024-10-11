@@ -23,7 +23,8 @@ socket.on('connect', () => {
         const username = localStorage.getItem('username');
 
     socket.emit('userLogin', username);                     //TODO: Change to userJoin
-
+    
+    
 });
 
 socket.on('connect_error', (err) => {
@@ -46,7 +47,6 @@ let timestamp = new Date().toLocaleTimeString(); // 11:18:48
 let lobby_name = 'Game Lobby';
 //...
 
-
 const commands = {
     help(command_name) {
         switch(command_name) {
@@ -58,12 +58,22 @@ const commands = {
               break;
 
             default:
-                if (command_name != null) {
-                    term.echo(`No spesific information on ${command_name} \nList of available commands: ${help}.`);
+
+                if( localStorage.getItem('current_role') === 'host'){
+                    if (command_name != null) {
+                        term.echo(`No spesific information on ${command_name} \nList of available commands: ${help}.`);
+                    } else {
+                        term.echo(`List of available HOST commands: ${help}. Type help *command* for info on spesific command.`);
+                    }   
                 } else {
-                    term.echo(`List of available commands: ${help}. Type help *command* for info on spesific command.`);
-                }   
-          } 
+
+                    if (command_name != null) {
+                        term.echo(`No spesific information on ${command_name} \nList of available commands: ${help}.`);
+                    } else {
+                        term.echo(`List of available commands: ${help}. Type help *command* for info on spesific command.`);
+                    }   
+                }
+          }  
     },
     echo(...args) {
         if (args.length > 0) {
@@ -71,8 +81,14 @@ const commands = {
         }
     },
 
-    mode(){
-        term.echo(`Chatmode is currently: ${chatMode}`)
+    chatmode(){
+        if(chatMode){
+            chatMode = false;
+            term.echo('Exited chat mode. You can now enter commands.');
+        } else {
+            chatMode = true;
+            term.echo('You are now in chat mode. Type your message and hit Enter to send.');
+        }
     },
 
     refresh(){
@@ -80,16 +96,6 @@ const commands = {
         ready();
     },
    
-    enterChatMode() {
-        chatMode = true;
-        term.echo('You are now in chat mode. Type your message and hit Enter to send.');
-    },
-
-    exitChatMode() {
-        chatMode = false;
-        term.echo('Exited chat mode. You can now enter commands.');
-    },
-
     logout() {
         localStorage.removeItem('username');
         localStorage.removeItem('token');
@@ -135,7 +141,7 @@ const commands = {
 
     list(variable, location) {
 
-        if (location){
+        if (variable && location){
             if(variable === 'users'){
                 if (location === 'in lobby' || location === 'lobby'){
                     socket.emit('get room users', roomId, (callback) => {
@@ -195,7 +201,6 @@ const commands = {
     
     invite(user){
         socket.emit('requestUserList', (users) => {
-            //if (users.includes(user)) {
             if (users[user]){
                     socket.emit('invite', roomId, user, username, (callback) => {
                     term.echo(callback)
@@ -213,11 +218,9 @@ const commands = {
 // Listen for game messages and display them
 socket.on('gameMessage', msg => {
     console.log(`Received from server: ${msg}`)
-    //if (room === roomId){
         term.echo(msg);
-    //}
 });
-
+// Listen for whisper messages and display them     //TODO: change this to a socket message directly to user?
 socket.on('whisper message', (usr, msg) => {
     const username = localStorage.getItem('username');
     if (usr === username){
@@ -256,6 +259,7 @@ const term = $('body').terminal(commands, {
 //term.pause();
 
 function ready() {
+    const username = localStorage.getItem('username');
     term.echo(() => {
         term.echo(() => render(`Terminal Consequences: ${lobby_name}`))  
         .echo(`<white> User: </white> <red>${username}</red> <white> ... Welcome to Game: ${lobby_name}.</white> \n`).resume(); //TODO: lobby name and id below
@@ -267,7 +271,84 @@ function ready() {
 
         term.echo(`<green>Game Lobby: </green>Users in lobby: ${lobby_clients}`);
     });
+
+    // After joining the room, fetch the user's role
+    
+    socket.emit('getUserData', username, roomId, (userData) => {
+        localStorage.setItem('current_role', userData.role);
+        if (userData.role === 'host') {
+            term.echo('<green>Game Lobby: </green> You are the host! ');
+            addHostCommands();  // Call a function to add host-specific commands
+            updateCommandListAndFormatting();  // Update the command list and formatting
+        }
+    });
 }
+
+
+
+// Function to add host-specific commands
+//function addHostCommands() {
+    const hostCommands = {
+        startgame() {
+            term.echo("Not impemented yet");
+            socket.emit('startGame', roomId, (response) => {
+                term.echo(response);
+            });
+        },
+        kick(usernameToKick) {
+            if (usernameToKick) {
+                socket.emit('kickUser', roomId, usernameToKick, (response) => {
+                    term.echo(response);
+                });
+            } else {
+                term.echo('Specify a username to kick.');
+            }
+        },
+        endgame() {
+            socket.emit('endGame', roomId, (response) => {
+                term.echo(response);
+            });
+        },
+        setrole(username, role) {
+            socket.emit('setUserRole', roomId, username, role, (response) => {
+                term.echo(response);
+            });
+        },
+    };
+    //Object.assign(commands, hostCommands); // Extend the existing commands object
+//}
+
+function addHostCommands() {
+    // Object.keys(hostCommands).forEach(commandName => {
+    //     commands[commandName] = hostCommands[commandName];  // Assign the function to the commands object
+    // });
+    Object.assign(commands, hostCommands); // Extend the existing commands object
+
+}
+
+function updateCommandListAndFormatting() {
+    // Regenerate command_list to include new commands
+    const command_list = ['clear'].concat(Object.keys(commands));
+
+    // Regenerate the formatted list for displaying in help
+    const formatted_list = command_list.map(cmd => {
+        return `<white class="command">${cmd}</white>`;
+    });
+
+    // Update the help variable with the new command list
+    help = formatter.format(formatted_list);
+
+    // Update the regular expressions with the new command list
+    const any_command_re = new RegExp(`^\\s*(${command_list.join('|')})`);
+    const re = new RegExp(`^\\s*(${command_list.join('|')})(\\s?.*)`);
+
+    // Update the terminal formatter to handle new commands
+    $.terminal.new_formatter([re, function(_, command, args) {
+        return `<white>${command}</white><aqua>${args}</aqua>`;
+    }]);
+
+    term.update();
+ }
 
 function render(text) {
     const cols = term.cols();

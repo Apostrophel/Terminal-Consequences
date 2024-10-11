@@ -34,6 +34,8 @@ const formatter = new Intl.ListFormat('en', {
   
 let chatMode = false;
 let timestamp = new Date().toLocaleTimeString(); // 11:18:48 AM
+const quit_chat_words = ['!exit', '!chatmode' ]
+
 
 const commands = {
     help(command_name) {
@@ -59,23 +61,23 @@ const commands = {
         }
     },
 
-    mode(){
-        term.echo(`Chatmode is currently: ${chatMode}`)
+    chatmode(){
+        if(chatMode){
+            chatMode = false;
+            term.echo('Exited chat mode. You can now enter commands.');
+        } else {
+            chatMode = true;
+            term.echo(`You are now in chat mode. Type your message and hit Enter to send. Back to terminal use: <yellow>${quit_chat_words}</yellow>`);
+            //$.terminal.new_formatter([re, function(_, command, args) {
+                term.set_prompt('<yellow>chat</yellow>> ');
+            //    return ' '
+            //}]); 
+        }
     },
 
     refresh(){
         this.exec('clear');
         ready();
-    },
-   
-    enterChatMode() {
-        chatMode = true;
-        term.echo('You are now in chat mode. Type your message and hit Enter to send.');
-    },
-
-    exitChatMode() {
-        chatMode = false;
-        term.echo('Exited chat mode. You can now enter commands.');
     },
 
     logout() {
@@ -150,6 +152,7 @@ const commands = {
         });
 
     },
+
     // join(room_id){
     //     socket.emit('joinGame', username, room_id (response) => {
     //     window.location.href = `game.html?roomId=${response.split('/').pop()}`; // Extract the room ID from the response
@@ -171,7 +174,7 @@ socket.on('whisper message', (usr, msg) => {
 });
 
 socket.on('invitation', (invited_user, hostUser, room_id) => {
-    term.echo(`[[;yellow;]${hostUser} has invited you to join room ${room_id}. Click here to [[!;;;;/game.html?roomId=${room_id}]Join Room]]`);
+    term.echo(`<green>TQ: </green>[[;yellow;]${hostUser} has invited you to join room ${room_id}. Click here to [[!;;;;/game.html?roomId=${room_id}]Join Room]].`);
 });
 
 
@@ -198,13 +201,57 @@ const font = 'Bloody';  // https://patorjk.com/software/taag/#p=display&f=Bloody
 figlet.defaults({ fontPath: 'https://unpkg.com/figlet/fonts/' });
 figlet.preloadFonts([font], ready);
 
-const term = $('body').terminal(commands, {
+// const term = $('body').terminal(commands, {
+//     greetings: false,
+//     checkArity: false,
+//     exit: false,
+//     completion: true,
+//     prompt: `<white>${username}</white>@tq.lobby> `,
+//     history: true
+// });
+
+
+// Set up terminal
+ const term = $('body').terminal(function(command, term) {
+    const username = localStorage.getItem('username');
+    
+    // Check if chatMode is active
+    if (chatMode) {
+        // If the user types 'exit', exit chat mode
+        if (quit_chat_words.includes(command.trim().toLowerCase())) {
+            chatMode = false;
+            term.echo('<yellow>Chat mode deactivated. You are back to command mode.</yellow>');
+            term.set_prompt(`<white>${username}</white>@tq.lobby> `)
+        } else {
+            // Treat all input as a chat message
+            const timestamp = new Date().toLocaleTimeString();
+            const chatMessage = `${timestamp} ${username}:\t\t${command}`; 
+            socket.emit('chat message', chatMessage); // Send to server
+        }
+    } else {
+        const parts = command.trim().split(/\s+/); // Split by whitespace
+        const cmd = parts[0]; // First part is the command
+        const args = parts.slice(1); // Rest are the arguments
+
+        // Check if the command exists
+        if (commands[cmd]) {
+            // Call the specific command and pass any arguments
+            commands[cmd](...args);
+        } else {
+            term.echo(`Unknown command: ${cmd}`);
+        }
+    }
+}, {
     greetings: false,
     checkArity: false,
     exit: false,
     completion: true,
     prompt: `<white>${username}</white>@tq.lobby> `,
     history: true
+    // onBlur: function() {
+    //     // Prevents losing focus
+    //     return false;
+    // }
 });
 
 //term.pause();
@@ -246,20 +293,7 @@ term.on('click', '.command', function() {
     term.exec(command);
  });
 
- // Override the terminal's command input to handle chat mode
- term.on('command:enter', function(command) {
-    term.echo("THE WORKS")
-    if (chatMode) {
-        term.echo("i was here")
-        // If in chat mode, treat input as a message
-        commands.say(command); // Directly call the say method
-    } else {
-        // Otherwise, process as a normal command
-        this.exec(command);
-    }
-});
-
-socket.on('disconnect', () => {                                 //TODO: This dosnnt work? 
+socket.on('disconnect', () => {                                 
     const username = localStorage.getItem('username');
     console.log(`Client disconnected: ${username}`);        
     socket.emit('userLogout', username);
