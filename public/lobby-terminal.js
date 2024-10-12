@@ -34,7 +34,7 @@ const formatter = new Intl.ListFormat('en', {
   
 let chatMode = false;
 let timestamp = new Date().toLocaleTimeString(); // 11:18:48 AM
-const quit_chat_words = ['!exit', '!chatmode' ]
+const quit_chat_commands = ['!exit', '!chatmode' ]
 
 
 const commands = {
@@ -67,7 +67,7 @@ const commands = {
             term.echo('Exited chat mode. You can now enter commands.');
         } else {
             chatMode = true;
-            term.echo(`You are now in chat mode. Type your message and hit Enter to send. Back to terminal use: <yellow>${quit_chat_words}</yellow>`);
+            term.echo(`You are now in chat mode. Type your message and hit Enter to send. Back to terminal use: <yellow>${quit_chat_commands}</yellow>`);
             //$.terminal.new_formatter([re, function(_, command, args) {
                 term.set_prompt('<yellow>chat</yellow>> ');
             //    return ' '
@@ -76,7 +76,7 @@ const commands = {
     },
 
     refresh(){
-        this.exec('clear');
+        term.exec('clear');
         ready();
     },
 
@@ -94,7 +94,7 @@ const commands = {
     },
 
     exit: function() {  // Define exit as a function reference
-        this.exec('logout'); // Call logout when exit is invoked
+        term.exec('logout'); // Call logout when exit is invoked
     },
 
     say(message) {
@@ -130,7 +130,7 @@ const commands = {
     },
 
     who() {
-        this.exec('list users'); 
+            term.exec('list users');  //TODO: EXCEC DOES NOT WOEKK
     },
 
     whisper(to_username, message){
@@ -185,14 +185,13 @@ const formatted_list = command_list.map(cmd => {
 });
 const help = formatter.format(formatted_list);
 
+// Format commands as they are typed:
 const any_command_re = new RegExp(`^\s*(${command_list.join('|')})`);
- 
 const re = new RegExp(`^\s*(${command_list.join('|')})(\s?.*)`);
 
 $.terminal.new_formatter([re, function(_, command, args) {
     return `<white>${command}</white><aqua>${args}</aqua>`;
 }]);
-
 
 const username = localStorage.getItem('username');
 
@@ -201,16 +200,6 @@ const font = 'Bloody';  // https://patorjk.com/software/taag/#p=display&f=Bloody
 figlet.defaults({ fontPath: 'https://unpkg.com/figlet/fonts/' });
 figlet.preloadFonts([font], ready);
 
-// const term = $('body').terminal(commands, {
-//     greetings: false,
-//     checkArity: false,
-//     exit: false,
-//     completion: true,
-//     prompt: `<white>${username}</white>@tq.lobby> `,
-//     history: true
-// });
-
-
 // Set up terminal
  const term = $('body').terminal(function(command, term) {
     const username = localStorage.getItem('username');
@@ -218,7 +207,7 @@ figlet.preloadFonts([font], ready);
     // Check if chatMode is active
     if (chatMode) {
         // If the user types 'exit', exit chat mode
-        if (quit_chat_words.includes(command.trim().toLowerCase())) {
+        if (quit_chat_commands.includes(command.trim().toLowerCase())) {
             chatMode = false;
             term.echo('<yellow>Chat mode deactivated. You are back to command mode.</yellow>');
             term.set_prompt(`<white>${username}</white>@tq.lobby> `)
@@ -245,7 +234,15 @@ figlet.preloadFonts([font], ready);
     greetings: false,
     checkArity: false,
     exit: false,
-    completion: true,
+    completion: function(string, callback) {
+        if (!chatMode) {
+             const availableCommands = Object.keys(commands);
+            const suggestions = availableCommands.filter(cmd => cmd.startsWith(string));
+            callback(suggestions);   
+        } else {
+             callback([]);
+        }
+    },
     prompt: `<white>${username}</white>@tq.lobby> `,
     history: true
     // onBlur: function() {
@@ -255,7 +252,6 @@ figlet.preloadFonts([font], ready);
 });
 
 //term.pause();
-
 
 function ready() {
     term.echo(() => {
@@ -273,21 +269,6 @@ function render(text) {
     });
 }
 
-function rainbow(string) {
-    return lolcat.rainbow(function(char, color) {
-        char = $.terminal.escape_brackets(char);
-        return `[[;${hex(color)};]${char}]`;
-    }, string).join('\n');
-}
-
-function hex(color) {
-    return '#' + [color.red, color.green, color.blue].map(n => {
-        return n.toString(16).padStart(2, '0');
-    }).join('');
-}
-
- 
-
 term.on('click', '.command', function() {
     const command = $(this).text();
     term.exec(command);
@@ -298,48 +279,3 @@ socket.on('disconnect', () => {
     console.log(`Client disconnected: ${username}`);        
     socket.emit('userLogout', username);
 });
-
-
-
-// let say_listen = true;
-// let inputBuffer = [];
-
-
-// term.on('keydown', function(e) {
-
-//     if (e.key === 'Enter') {
-//         term.set_prompt(`<white>${username}</white>@tq.lobby> `);
-//         say_listen = true;
-//         inputBuffer = [];
-//         $.terminal.new_formatter([re, function(_, command, args) {
-//             return `<white>${command}</white><aqua>${args}</aqua>`;
-//         }]);
-//      }
-// });
-
-
-// term.on('keydown', function(e) {
-//     console.log(inputBuffer);
- 
-//     // Check if the key pressed is a printable character or space
-//     if (e.key.length === 1 || e.key === ' ') {       
-//         if (say_listen){       
-//             inputBuffer += e.key;  // Accumulate input
-//             if (inputBuffer === 'say ') {
-
-//                 say_listen = false;
-                 
-//                 $.terminal.new_formatter([re, function(_, command, args) {
-//                     term.set_prompt(' ');
-//                     return ' '
-//                 }]); 
-
-//             }  
-//         }
-//     } else if (e.key === 'Backspace') {
-//         // Handle backspace to remove last character
-//         inputBuffer = inputBuffer.slice(0, -1);
-        
-//     }
-// });
- 
