@@ -1,8 +1,12 @@
-const formatter = new Intl.ListFormat('en', {
-    style: 'long',
-    type: 'conjunction',
-  });
-  
+/**
+ * This script handles the terminal interface for the front page of the "Terminal Consequences" application, 
+ * providing user interaction features such as login, registration, and general terminal commands. It sets up a jQuery Terminal 
+ * instance, manages user input, and communicates with the server through API calls to enable authentication and other commands.
+ * 
+ * @project Terminal Consequences.
+ * @author: sjurbarndon@proton.me
+ */
+
 const commands = {
     help(command_name) {
         switch(command_name) {
@@ -140,13 +144,16 @@ function user_login(username, password){
     });
 }
 
+// Format commands as they are typed and for the help-command:
+const formatter = new Intl.ListFormat('en', {
+    style: 'long',
+    type: 'conjunction',
+  });
 const command_list = ['clear'].concat(Object.keys(commands));
 const command_formatter = command_list.map(cmd => {
     return `<white class="command">${cmd}</white>`;
 });
 const commands_formatted_for_help = formatter.format(command_formatter);
-
-// Format commands as they are typed:
 const any_command_re = new RegExp(`^\s*(${command_list.join('|')})`);
 const re = new RegExp(`^\s*(${command_list.join('|')})(\s?.*)`);
 
@@ -154,6 +161,7 @@ const font = 'Bloody';  // https://patorjk.com/software/taag/#p=display&f=Bloody
 figlet.defaults({ fontPath: 'https://unpkg.com/figlet/fonts/' });
 figlet.preloadFonts([font], ready);
 
+// Set up jQuery Terminal:
 const term = $('body').terminal(commands, {
     greetings: false,
     checkArity: false,

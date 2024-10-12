@@ -1,11 +1,25 @@
+/**
+ * This script manages the terminal interface for individual game sessions within "Terminal Consequences". 
+ * It handles player commands, game logic, and real-time updates using Socket.IO. The script allows players 
+ * to communicate, make in-game decisions, and interact with other players in the game environment.
+ * 
+ * @project Terminal Consequences
+ * @author: sjurbarndon@proton.me
+ * 
+ * @example
+ * // Example of terminal commands during a game session:
+ * > attack player2    // Initiates an attack on "player2".
+ * > defend            // Executes a defense action.
+ * > chat Nice move!   // Sends the chat message "Nice move!" to other players in the game.
+ * > quit              // Exits the current game and returns to the lobby.                              //TODO: none of this is not impemented
+ */
+
+
 // Determine if we are in development or production based on the window location
 const isDevelopment = window.location.hostname === 'localhost'; 
-
-// Use the appropriate Socket.IO server URL based on the environment
 const socket = io(isDevelopment ? 'http://localhost:5000' : 'https://terminal-6xn7.onrender.com', {
     transports: ['websocket', 'polling'] // Use both websocket and polling transports
 });
-
 
 // Extract the roomId from the URL (e.g., /game/:roomId)
 const urlParams = new URLSearchParams(window.location.search);
@@ -21,10 +35,7 @@ socket.emit('joinGame', roomId, username, (response) => {
 socket.on('connect', () => {
     console.log('Successfully connected to the Socket.IO server and game lobby');
         const username = localStorage.getItem('username');
-
-    socket.emit('userLogin', username);                     //TODO: Change to userJoin
-    
-    
+    socket.emit('userLogin', username);                     //TODO: Change to userJoin ??
 });
 
 socket.on('connect_error', (err) => {

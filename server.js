@@ -1,3 +1,13 @@
+/**
+ * This script serves as the backend server for the "Terminal Consequences" application, 
+ * managing routes, authentication, and real-time communication via Socket.IO. It handles 
+ * API requests for user login, registration, and session management. The server also 
+ * manages different game rooms and player interactions.
+ * 
+ * @project Terminal Consequences
+ * @author: sjurbarndon@proton.me
+ */
+
 
 const express = require("express");
 const dotenv = require("dotenv");
@@ -15,16 +25,6 @@ const { v4: uuidv4 } = require('uuid');
 const {nanoid} = require('nanoid');
 const { user } = require("./db/config");
 //const { customAlphabet } = require('nanoid');
-
-// import express from 'express';
-// import dotenv from 'dotenv';
-// dotenv.config();
-// import cors from 'cors';
-// import connectDB from './db/db.js'; // Ensure to use .js extension for ESM
-// import http from 'http';
-// //import { Server as socketIo } from 'socket.io'; // Updated import for socket.io
-// import { Server } from 'socket.io'; // Import Server from socket.io
-// import authRoutes from './routes/authRoutes.js'; // Ensure to use .js extension for ESM
 
 
 

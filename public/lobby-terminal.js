@@ -1,41 +1,44 @@
+/**
+ * This script sets up the terminal interface for the lobby section of the "Terminal Consequences" application, 
+ * allowing users to interact with the game lobby, see other players, and join or create game rooms. It integrates 
+ * with Socket.IO for real-time updates and provides commands for interacting within the lobby.
+ * 
+ * @project Terminal Consequences
+ * @author: sjurbarndon@proton.me
+ * 
+ * @example
+ * // Example of terminal commands in the lobby:
+ * > list users        // Displays a list of users currently in the lobby.
+ * > creategame        // Creates a new game room with a randomly generated id.
+ * > join game1        // Joins the game room called "game1".
+ * > say Hello!        // Sends a chat message "Hello!" to other users in the lobby.
+ */
+
+
 // Determine if we are in development or production based on the window location
 const isDevelopment = window.location.hostname === 'localhost'; 
-
-// Use the appropriate Socket.IO server URL based on the environment
 const socket = io(isDevelopment ? 'http://localhost:5000' : 'https://terminal-6xn7.onrender.com', {
     transports: ['websocket', 'polling'] // Use both websocket and polling transports
 });
 
+
+let chatMode = false;
+let timestamp = new Date().toLocaleTimeString();
+const quit_chat_commands = ['!exit', '!chatmode' ]
+const username = localStorage.getItem('username');
+
+
 socket.on('connect', () => {
     console.log('Successfully connected to the Socket.IO server');
-    
-    const username = localStorage.getItem('username');
     socket.emit('userLogin', username);
-
-
 });
 
 socket.on('connect_error', (err) => {
     console.error('Connection Error:', err);
     console.log(err.message);
-
-    // some additional description, for example the status code of the initial HTTP response
     console.log(err.description);
-  
-    // some additional context, for example the XMLHttpRequest object
     console.log(err.context);
 });
-
-const formatter = new Intl.ListFormat('en', {
-    style: 'long',
-    type: 'conjunction',
-  });
-  
-  
-let chatMode = false;
-let timestamp = new Date().toLocaleTimeString(); // 11:18:48 AM
-const quit_chat_commands = ['!exit', '!chatmode' ]
-
 
 const commands = {
     help(command_name) {
@@ -49,9 +52,9 @@ const commands = {
 
             default:
                 if (command_name != null) {
-                    term.echo(`No spesific information on ${command_name} \nList of available commands: ${help}.`);
+                    term.echo(`No spesific information on ${command_name} \nList of available commands: ${commands_formatted_for_help}.`);
                 } else {
-                    term.echo(`List of available commands: ${help}. Type help *command* for info on spesific command.`);
+                    term.echo(`List of available commands: ${commands_formatted_for_help}. Type help *command* for info on spesific command.`);
                 }   
           } 
     },
@@ -68,10 +71,7 @@ const commands = {
         } else {
             chatMode = true;
             term.echo(`You are now in chat mode. Type your message and hit Enter to send. Back to terminal use: <yellow>${quit_chat_commands}</yellow>`);
-            //$.terminal.new_formatter([re, function(_, command, args) {
-                term.set_prompt('<yellow>chat</yellow>> ');
-            //    return ' '
-            //}]); 
+            term.set_prompt('<yellow>chat</yellow>> ');
         }
     },
 
@@ -81,24 +81,21 @@ const commands = {
     },
 
     logout() {
-        const username = localStorage.getItem('username');
         localStorage.removeItem('username');
         localStorage.removeItem('token');
         term.echo('You have been logged out successfully, bye!');
-
-        socket.emit('userLogout', username);                        //TODO: Do this also for disconnect etc ????
+        socket.emit('userLogout', username);                                                //TODO: Do this also for disconnect etc ????
 
         setTimeout(() => {
-            window.location.href = 'index.html'; // Replace with your login page URL
-        }, 500); // 1 second delay for user feedback before redirecting
+            window.location.href = 'index.html';
+        }, 500);
     },
 
-    exit: function() {  // Define exit as a function reference
-        term.exec('logout'); // Call logout when exit is invoked
+    exit: function() {   
+        term.exec('logout');
     },
 
     say(message) {
-        const username = localStorage.getItem('username');
         if (username && message) {
             const chatMessage = `${timestamp}  ${username}:\t\t${message}`;
             socket.emit('chat message', chatMessage);
@@ -110,82 +107,68 @@ const commands = {
     },
 
     list(variable) {
-
         if (variable === "users") {
-            
             socket.emit('requestUserList', (users) => {
- 
-                if (Object.keys(users).length > 0) { // Use Object.keys() for an object or .length for an array
-                    const userList = Object.keys(users).join(', ');  // Join the keys of the object (usernames)
+                if (Object.keys(users).length > 0) {                    // Use Object.keys() for an object or .length for an array
+                    const userList = Object.keys(users).join(', ');     // Join the keys of the object (usernames)
                     term.echo(`Currently logged in users: ${userList}`);
                 } else {
                     term.echo('No users are currently logged in.');
                 }
             });
-
         } else {
             term.echo('list what?');
         }
-
     },
 
     who() {
-            term.exec('list users');  //TODO: EXCEC DOES NOT WOEKK
+        term.exec('list users');
     },
 
-    whisper(to_username, message){
-        const username = localStorage.getItem('username');
+    whisper(to_username, message){                                      //TODO: check if user is online -  issue #10
         const whisperMessage = `${timestamp}  ${username} whispers: \t\t<pink>${message}</pink>`;
         socket.emit('whisper message', to_username, whisperMessage);               //sends the message to all connected clients.
-
     },
 
-    // Command to create a game
     creategame() {
-        socket.emit('creategame', username, (response) => {
-            
-            //console.log(`Game created at: ${response}`)
-            term.echo(`Game created at: ${response}`); // Show the room ID or any feedback
-            // Redirect to game.html with the new room ID as a query parameter
+        socket.emit('creategame', username, (response) => {            
+            term.echo(`Game created at: ${response}`);                         
             window.location.href = `game.html?roomId=${response.split('/').pop()}`; // Extract the room ID from the response
-
         });
-
     },
 
-    // join(room_id){
+    // join(room_id){                                                   //TODO: issue #14
     //     socket.emit('joinGame', username, room_id (response) => {
     //     window.location.href = `game.html?roomId=${response.split('/').pop()}`; // Extract the room ID from the response
     // }
-
-
 };
 
-// Listen for messages from other users
 socket.on('chat message', (msg) => {
     term.echo(msg);
 });
 
 socket.on('whisper message', (usr, msg) => {
-    const username = localStorage.getItem('username');
     if (usr === username){
         term.echo(msg);
     }
 });
 
-socket.on('invitation', (invited_user, hostUser, room_id) => {
+socket.on('invitation', (invited_user, hostUser, room_id) => {  //TODO: remove invited user here and server
     term.echo(`<green>TQ: </green>[[;yellow;]${hostUser} has invited you to join room ${room_id}. Click here to [[!;;;;/game.html?roomId=${room_id}]Join Room]].`);
 });
 
 
-
+// Inline and help-command formatting:
+const formatter = new Intl.ListFormat('en', {
+    style: 'long',
+    type: 'conjunction',
+  });
 const command_list = ['clear'].concat(Object.keys(commands));
 const formatted_list = command_list.map(cmd => {
     return `<white class="command">${cmd}</white>`;
 });
-const help = formatter.format(formatted_list);
+const commands_formatted_for_help = formatter.format(formatted_list);
 
-// Format commands as they are typed:
 const any_command_re = new RegExp(`^\s*(${command_list.join('|')})`);
 const re = new RegExp(`^\s*(${command_list.join('|')})(\s?.*)`);
 
@@ -193,38 +176,28 @@ $.terminal.new_formatter([re, function(_, command, args) {
     return `<white>${command}</white><aqua>${args}</aqua>`;
 }]);
 
-const username = localStorage.getItem('username');
 
 const font = 'Bloody';  // https://patorjk.com/software/taag/#p=display&f=Bloody&t=Terminal%20Consequences <-- for more fonts ascii art
-
 figlet.defaults({ fontPath: 'https://unpkg.com/figlet/fonts/' });
 figlet.preloadFonts([font], ready);
 
-// Set up terminal
- const term = $('body').terminal(function(command, term) {
-    const username = localStorage.getItem('username');
-    
-    // Check if chatMode is active
+// Set up jQuery Terminal:
+const term = $('body').terminal(function(command, term) {    
     if (chatMode) {
-        // If the user types 'exit', exit chat mode
         if (quit_chat_commands.includes(command.trim().toLowerCase())) {
             chatMode = false;
             term.echo('<yellow>Chat mode deactivated. You are back to command mode.</yellow>');
             term.set_prompt(`<white>${username}</white>@tq.lobby> `)
         } else {
-            // Treat all input as a chat message
             const timestamp = new Date().toLocaleTimeString();
             const chatMessage = `${timestamp} ${username}:\t\t${command}`; 
-            socket.emit('chat message', chatMessage); // Send to server
+            socket.emit('chat message', chatMessage);
         }
     } else {
-        const parts = command.trim().split(/\s+/); // Split by whitespace
-        const cmd = parts[0]; // First part is the command
-        const args = parts.slice(1); // Rest are the arguments
-
-        // Check if the command exists
+        const parts = command.trim().split(/\s+/);
+        const cmd = parts[0];  
+        const args = parts.slice(1); 
         if (commands[cmd]) {
-            // Call the specific command and pass any arguments
             commands[cmd](...args);
         } else {
             term.echo(`Unknown command: ${cmd}`);
@@ -245,10 +218,6 @@ figlet.preloadFonts([font], ready);
     },
     prompt: `<white>${username}</white>@tq.lobby> `,
     history: true
-    // onBlur: function() {
-    //     // Prevents losing focus
-    //     return false;
-    // }
 });
 
 //term.pause();
@@ -275,7 +244,6 @@ term.on('click', '.command', function() {
  });
 
 socket.on('disconnect', () => {                                 
-    const username = localStorage.getItem('username');
     console.log(`Client disconnected: ${username}`);        
     socket.emit('userLogout', username);
 });
