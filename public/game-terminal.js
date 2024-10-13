@@ -14,7 +14,6 @@
  * > quit              // Exits the current game and returns to the lobby.                              //TODO: none of this is not impemented
  */
 
-
 // Determine if we are in development or production based on the window location
 const isDevelopment = window.location.hostname === 'localhost'; 
 const socket = io(isDevelopment ? 'http://localhost:5000' : 'https://terminal-6xn7.onrender.com', {
@@ -27,6 +26,9 @@ const roomId = urlParams.get('roomId');
 console.log(roomId);
 
 const username = localStorage.getItem('username');
+const quit_chat_commands = ['!exit', '!chatmode' ]
+let chatMode = false;
+let timestamp = new Date().toLocaleTimeString(); // 11:18:48
 
 socket.emit('joinGame', roomId, username, (response) => {
     console.log(`In Game Response: ${response}`);
@@ -50,10 +52,6 @@ const formatter = new Intl.ListFormat('en', {
     type: 'conjunction',
   });
   
-  
-let chatMode = false;
-let timestamp = new Date().toLocaleTimeString(); // 11:18:48
-
 const commands = {
     help(command_name) {
         switch(command_name) {
@@ -94,7 +92,8 @@ const commands = {
             term.echo('Exited chat mode. You can now enter commands.');
         } else {
             chatMode = true;
-            term.echo('You are now in chat mode. Type your message and hit Enter to send.');
+            term.echo(`You are now in chat mode. Type your message and hit Enter to send. Back to terminal use: <yellow>${quit_chat_commands}</yellow>`);
+            term.set_prompt('<yellow>chat</yellow>> ');
         }
     },
 
@@ -136,7 +135,6 @@ const commands = {
 
         if (username && message) {
             const chatMessage = `${timestamp}  ${username}:\t\t${message}`;
-            //socket.emit('chat message', chatMessage);               //sends the message to all connected clients.
             socket.emit('gameMessage', roomId, chatMessage); //Send message with roomId                                //TODO: Change to ***character name***
 
         } else if (message == null) {
@@ -260,13 +258,46 @@ const font = 'Elite';  // https://patorjk.com/software/taag/#p=display&f=Bloody&
 figlet.defaults({ fontPath: 'https://unpkg.com/figlet/fonts/' });
 figlet.preloadFonts([font], ready);
 
-const term = $('body').terminal(commands, {
+// Set up jQuery Terminal:
+const term = $('body').terminal(function(command, term) {    
+    if (chatMode) {
+        if (quit_chat_commands.includes(command.trim().toLowerCase())) {
+            chatMode = false;
+            term.echo('<yellow>Chat mode deactivated. You are back to command mode.</yellow>');
+            term.set_prompt(`<white>${username}</white>@tq.lobby> `)
+        } else {
+            const timestamp = new Date().toLocaleTimeString();
+            const chatMessage = `${timestamp} ${username}:\t\t${command}`; 
+            socket.emit('gameMessage', roomId, chatMessage); //Send message with roomId                                //TODO: Change to ***character name***
+
+        }
+    } else {
+        const parts = command.trim().split(/\s+/);
+        const cmd = parts[0];  
+        const args = parts.slice(1); 
+        if (commands[cmd]) {
+            commands[cmd](...args);
+        } else {
+            term.echo(`Unknown command: ${cmd}`);
+        }
+    }
+}, {
     greetings: false,
     checkArity: false,
     exit: false,
-    completion: true,
-    prompt: `<white>${username}</white>@tq.game> `
+    completion: function(string, callback) {
+        if (!chatMode) {
+             const availableCommands = Object.keys(commands);
+            const suggestions = availableCommands.filter(cmd => cmd.startsWith(string));
+            callback(suggestions);   
+        } else {
+             callback([]);
+        }
+    },
+    prompt: `<white>${username}</white>@tq.game> `,
+    history: true
 });
+
 
 //term.pause();
 
