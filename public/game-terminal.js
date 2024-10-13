@@ -401,12 +401,19 @@ function ready() {
             term.echo('<green>Game Lobby: </green>You are the host! ');
             addHostCommands();   
         }
+        if (socket.connected){
+            term.echo("<yellow>Connected!</yellow>");       //TODO: this is not working as intened ?
+        }
     });
 
     socket.emit('getRoomUsers', roomId, (callback) => {
         const lobby_clients = Object.keys(callback).join(', ');  // Join the keys of the object (usernames)
         term.echo(`<green>Game Lobby: </green>Users in lobby: ${lobby_clients}`);
     });
+
+    if (!socket.connected) {
+        term.echo("<yellow>Connecting... </yellow>"); 
+    }
     term.resume();
 }
 
