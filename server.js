@@ -52,7 +52,7 @@ const rooms = {}; // Store active rooms with user data
  
 // Socket.IO connection
 io.on('connection', (socket) => {
-  socket.emit('connectionStatus', 'connecting');  //TODO: This does not happen soon enough. The message comes too late. Issue #23
+  socket.emit('connectionStatus', 'connecting');
 
   let username; // Declare username for this connection
   socket.on('userLogin', (user) => {
@@ -117,18 +117,21 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Handle joining a game lobby, also assigns the lobby-roles (host or guest).
+  // Handle joining a game lobby
   socket.on('joinGame', (roomId, username, callback) => {
        if (rooms[roomId]) {
           socket.join(roomId);
-          if (Object.keys(rooms[roomId].users).length === 0){
-            rooms[roomId].users[username] = { role: 'host' };   
-          } else { 
-            rooms[roomId].users[username] = { role: 'guest' };
-          }
+          
+          // if (Object.keys(rooms[roomId].users).length === 0){
+          //   rooms[roomId].users[username] = { role: 'host' };   
+          // } else { 
+          //   rooms[roomId].users[username] = { role: 'guest' };
+          // }
+          rooms[roomId].users[username] = socket.id;
+
           callback(`Joined game lobby: ${roomId}`);
           rooms[roomId].invited_users = rooms[roomId].invited_users.filter(user => user !== username);                  //Withdraw the invite after user joined
-          io.to(roomId).emit('gameMessage', `<green>Game Lobby: </green>${username} has joined the game lobby!`); 
+          io.to(roomId).emit('gameMessage', `<green>Game Lobby: </green>${username} has joined the game lobby!`);   //TODO: This HAPPENS EVERY REFRESH, fix please.
       } else {
           callback(`Room ${roomId} does not exist.`);
       }

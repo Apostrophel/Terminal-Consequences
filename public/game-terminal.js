@@ -148,7 +148,7 @@ const commands = {
 
         if (variable && location){
             if(variable === 'users'){
-                if (location === 'in lobby' || location === 'lobby'){
+                if (location === 'in lobby' || location === 'lobby' || location === 'game'){
                     socket.emit('getRoomUsers', roomId, (callback) => {
                         const lobby_clients = Object.keys(callback).join(', ');  // Join the keys of the object (usernames)
                         term.echo(`Players in lobby: ${lobby_clients}`);
@@ -204,24 +204,28 @@ const commands = {
             } 
         });
     },
-    // invite(user){                                                        //TODO: let users try invite command and check if priviliges are granted
-    //     socket.emit('getRoomData', roomData => {
-    //         guest_invite_enabled = roomData.settings.guestInvite;
-    //         if(guest_invite_enabled){
-    //             socket.emit('requestUserList', (users) => {
-    //                 if (users[user]){
-    //                         socket.emit('invite', roomId, user, username, (callback) => {
-    //                         term.echo(callback)
-    //                     });
-    //                 }else {
-    //                     term.echo(`<red>Error:</red> ${user} is offline or does not exist.`)
-    //                 }
-    //             });
-    //         } else {
-    //             term.echo(`<red>Host has not granted invite privileges.</red>`)
-    //         }
-    //     });
-    // },
+    invite(user){                                                        //TODO: let users try invite command and check if priviliges are granted NEEDS TEST
+        if(localStorage.getItem('current_role') === 'host' ){
+            hostCommands.invite(user); 
+        } else {
+            socket.emit('getRoomData', roomId, roomData => {
+                guest_invite_enabled = roomData.settings.guestInvite;
+                if(guest_invite_enabled){
+                    socket.emit('requestUserList', (users) => {
+                        if (users[user]){
+                                socket.emit('invite', roomId, user, username, (callback) => {
+                                term.echo(callback)
+                            });
+                        }else {
+                            term.echo(`<red>Error:</red> ${user} is offline or does not exist.`)
+                        }
+                    });
+                } else {
+                    term.echo(`<red>Host has not granted invite privileges.</red>`)
+                }
+            });
+        }
+    },
 
 };
 
@@ -286,11 +290,11 @@ const term = $('body').terminal(function(command, term) {
     exit: false,
     completion: function(string, callback) {
         if (!chatMode) {
-             const availableCommands = Object.keys(commands);
+            const availableCommands = Object.keys(commands);
             const suggestions = availableCommands.filter(cmd => cmd.startsWith(string));
             callback(suggestions);   
         } else {
-             callback([]);
+            callback([]);
         }
     },
     prompt: `<white>${username}</white>@tq.game> `,
@@ -321,9 +325,14 @@ function ready() {
     });
 
     // After joining the room, fetch the user's role
-    socket.emit('getUserData', username, roomId, (userData) => {
-        localStorage.setItem('current_role', userData.role);
-        if (userData.role === 'host') {
+    socket.emit('getRoomData', roomId, (roomData) => {
+        if(roomData.settings.host === username){
+            localStorage.setItem('current_role', 'host');
+        } else {
+            localStorage.setItem('current_role', 'guest');
+        }
+
+        if (roomData.settings.host === username) {
             term.echo('<green>Game Lobby: </green> You are the host! ');
             addHostCommands();  // Call a function to add host-specific commands
             updateCommandListAndFormatting();  // Update the command list and formatting
