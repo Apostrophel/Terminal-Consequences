@@ -298,19 +298,16 @@ const term = $('body').terminal(function(command, term) {
 });
 
 
-//term.pause();
-
+term.pause();
 function ready() {
     const username = localStorage.getItem('username');
-    let lobby_name = "Temp Name";        //TODO: Get lobby name from server room data. Issue #25.
-
+    let lobby_name = "Temp Name";        
     socket.emit('getRoomData', roomId, (roomData) => {
          lobby_name = roomData.settings.gameName;
-         term.echo(() => {
-            term.echo(() => render(`Terminal Consequences: ${lobby_name}`))  
-            .echo(`<white> User: </white> <red>${username}</red> <white> ... Welcome to Game: ${lobby_name}.</white> \n`).resume(); //TODO: lobby name and id below
-          });
-
+         const welcome_message = render('Terminal Consequences: ');
+         term.echo(welcome_message);
+         term.echo(`<white> User: </white> <red>${username}</red> <white> ... Welcome to Game: ${lobby_name}.</white> \n`);
+         term.resume();
     });
 
     socket.emit('getRoomUsers', roomId, (callback) => {

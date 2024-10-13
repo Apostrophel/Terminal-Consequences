@@ -259,14 +259,13 @@ const term = $('body').terminal(function(command, term) {
     history: true
 });
 
-//term.pause();
-
+term.pause();
 function ready() {
-    term.echo(() => {
-        term.echo(() => render('Terminal Consequences: '))       
-        .echo(`<white>YOU ARE LOGGED IN AS </white> <red>${username}</red> <white> ... Welcome to the chat.</white> \n`).resume();
-      });
-}
+    const welcome_message = render('Terminal Consequences: ');
+    term.echo(welcome_message);
+    term.echo(`<white>YOU ARE LOGGED IN AS </white> <red>${username}</red> <white> ... Welcome to the chat.</white> \n`);
+    term.resume();
+ }
 
 function render(text) {
     const cols = term.cols();

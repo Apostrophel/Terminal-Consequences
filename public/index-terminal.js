@@ -175,14 +175,14 @@ $.terminal.new_formatter([re, function(_, command, args) {
     return `<white>${command}</white><aqua>${args}</aqua>`;
 }]);
 
-//term.pause();
+term.pause();
 
 function ready() {
-    term.echo(() => {
-        term.echo(() => render('Terminal Consequences'))
-        .echo('[[;white;]Welcome to the manor!]\n').resume();
-      });
-}
+    const welcome_message = render('Terminal Consequences');
+    term.echo(welcome_message);
+    term.echo('[[;white;]Welcome to the manor!]\n');
+    term.resume();
+ }
 
 function render(text) {
     const cols = term.cols();
