@@ -169,12 +169,23 @@ io.on('connection', (socket) => {
       io.to(roomId).emit('gameMessage', message);
   });
 
-  socket.on('get room users', (room_id, callback) => {
+  socket.on('getRoomUsers', (room_id, callback) => {
       callback(rooms[room_id].users);
   });
 
   socket.on('getUserData', (user_id, room_id, callback) => {
       callback(rooms[room_id].users[user_id])
+  });
+
+  socket.on('getRoomData', (room_id, callback) => {
+    callback(rooms[room_id])
+  });
+
+  socket.on('changeRoomName', (room_id, new_room_name, callback) =>{
+    if(rooms[room_id]){
+      rooms[room_id].settings.gameName = new_room_name;
+      callback(`Name changed to ${new_room_name}`)
+    } 
   });
 
   socket.on('userLeft', (user, room_id) => {

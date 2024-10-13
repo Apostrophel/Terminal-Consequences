@@ -149,7 +149,7 @@ const commands = {
         if (variable && location){
             if(variable === 'users'){
                 if (location === 'in lobby' || location === 'lobby'){
-                    socket.emit('get room users', roomId, (callback) => {
+                    socket.emit('getRoomUsers', roomId, (callback) => {
                         const lobby_clients = Object.keys(callback).join(', ');  // Join the keys of the object (usernames)
                         term.echo(`Players in lobby: ${lobby_clients}`);
                     });
@@ -170,7 +170,7 @@ const commands = {
             });
 
         } else if (variable === 'roles') {
-            socket.emit('get room users', roomId, (users) => {
+            socket.emit('getRoomUsers', roomId, (users) => {
                 
                 const lobbyClients = Object.keys(users).map(username => {
                     const role = users[username].role; // Access the role associated with the username
@@ -206,8 +206,10 @@ const commands = {
     },
 
     setname(new_name){
-        //TODO: this
-        term.exec('refresh');
+        socket.emit('changeRoomName', roomId, new_name, (callback) => {
+            term.echo(callback)
+            term.exec('refresh');
+        });
     },
     
     invite(user){
@@ -232,7 +234,7 @@ socket.on('gameMessage', msg => {
         term.echo(msg);
 });
 
-// Listen for whisper messages and display them     //TODO: change this to a socket message directly to user?
+// Listen for whisper messages and display them             //TODO: change this to a socket message directly to user?
 socket.on('whisper message', (usr, msg) => {
     const username = localStorage.getItem('username');
     if (usr === username){
@@ -303,14 +305,18 @@ const term = $('body').terminal(function(command, term) {
 
 function ready() {
     const username = localStorage.getItem('username');
-    let lobby_name = "TEMP";        //TODO: Get lobby name from server room data. Issue #25.
+    let lobby_name = "Temp Name";        //TODO: Get lobby name from server room data. Issue #25.
 
-    term.echo(() => {
-        term.echo(() => render(`Terminal Consequences: ${lobby_name}`))  
-        .echo(`<white> User: </white> <red>${username}</red> <white> ... Welcome to Game: ${lobby_name}.</white> \n`).resume(); //TODO: lobby name and id below
-      });
+    socket.emit('getRoomData', roomId, (roomData) => {
+         lobby_name = roomData.settings.gameName;
+         term.echo(() => {
+            term.echo(() => render(`Terminal Consequences: ${lobby_name}`))  
+            .echo(`<white> User: </white> <red>${username}</red> <white> ... Welcome to Game: ${lobby_name}.</white> \n`).resume(); //TODO: lobby name and id below
+          });
 
-    socket.emit('get room users', roomId, (callback) => {
+    });
+
+    socket.emit('getRoomUsers', roomId, (callback) => {
         const lobby_clients = Object.keys(callback).join(', ');  // Join the keys of the object (usernames)
         term.echo(`<green>Game Lobby: </green>Users in lobby: ${lobby_clients}`);
     });
