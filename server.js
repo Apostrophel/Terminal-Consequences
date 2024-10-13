@@ -95,6 +95,7 @@ io.on('connection', (socket) => {
           maxPlayers: 4, // Example of a default setting
           isStarted: false // Game state
         },
+        invited_users: [],    //store list of invited users (usernames)
         users: {}, // Store users and their roles
     };
 
@@ -108,6 +109,7 @@ io.on('connection', (socket) => {
     const invitedSocketId = users[invitedUsername];
     if (invitedSocketId) {
         io.to(invitedSocketId).emit('invitation', invitedUsername, hostUser,  roomId);
+        rooms[roomId].invited_users.push(invitedUsername);
         callback(`Invitation sent to ${invitedUsername}`);
     } else {
         callback(`${invitedUsername} is not online`);
@@ -124,10 +126,43 @@ io.on('connection', (socket) => {
             rooms[roomId].users[username] = { role: 'guest' };
           }
           callback(`Joined game lobby: ${roomId}`);
+          rooms[roomId].invited_users = rooms[roomId].invited_users.filter(user => user !== username);                  //Withdraw the invite after user joined
           io.to(roomId).emit('gameMessage', `<green>Game Lobby: </green>${username} has joined the game lobby!`); 
       } else {
           callback(`Room ${roomId} does not exist.`);
       }
+  });
+
+  // Handle requesting joining a game lobby:
+  socket.on('requestJoin', (username, roomId, callback) => {
+    console.log(`this happened: ${username}, ${roomId}`)
+    if (rooms[roomId]) {
+        if (rooms[roomId].invited_users.includes(username)){
+          callback({ room_exists: true, invitation: true, message: `<yellow>Joining room: ${roomId}.</yellow>` })
+        } else {
+
+          host_username = rooms[roomId].settings.host;
+          host_socketID = users[host_username];
+
+          io.to(roomId).emit('gameMessage', `<green>Game Lobby: </green>${username} has requested to join the game lobby!`); 
+          io.to(host_socketID).emit('gameMessage', 
+            `<green>Game Lobby: </green>${username} has requested to join the game lobby! [[!;;;;#]Let ${username} join]`);
+
+          callback({ room_exists: true, invitation: false,  message: `<green>TQ: </green><yellow>An invitation request has been sent to the host of game: ${roomId}.</yellow>` })
+        }
+    } else {
+      callback({ room_exists: false,  invitation: false,  message: `The room: ${roomId} does not exist.` })
+
+    }
+  });
+
+  // Handle the host clicking the "Let user join" command
+  socket.on('letUserJoin', (roomId, username, hostUser) => {
+    const invitedSocketId = users[username];
+    if (invitedSocketId) {
+      io.to(invitedSocketId).emit('invitation', username, hostUser, roomId);
+      rooms[roomId].invited_users.push(username);
+    }
   });
 
   socket.on('gameMessage', (roomId, message) => {

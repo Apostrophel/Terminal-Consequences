@@ -21,7 +21,6 @@ const socket = io(isDevelopment ? 'http://localhost:5000' : 'https://terminal-6x
     transports: ['websocket', 'polling'] // Use both websocket and polling transports
 });
 
-
 let chatMode = false;
 let timestamp = new Date().toLocaleTimeString();
 const quit_chat_commands = ['!exit', '!chatmode' ]
@@ -138,20 +137,11 @@ const commands = {
         term.exec('list users');
     },
 
-    // whisper(to_username, message){                                      //TODO: check if user is online -  issue #10
-    //     if (users[user]){
-    //         const whisperMessage = `${timestamp}  ${username} whispers: \t\t<pink>${message}</pink>`;
-    //         socket.emit('whisper message', to_username, whisperMessage);               //sends the message to all connected clients.
-    //     } else {
-    //         term.echo(`<red>Error:</red> ${user} is offline or does not exist.`)
-    //     }
-    // },
-
     whisper(to_username, message){
         socket.emit('requestUserList', (users) => {
             if (users[to_username]){
                 const whisperMessage = `${timestamp}  ${username} whispers: \t\t<pink>${message}</pink>`;
-                socket.emit('whisper message', to_username, whisperMessage);               //sends the message to all connected clients
+                socket.emit('whisper message', to_username, whisperMessage);             
                 term.echo(whisperMessage);
             } else {
                 term.echo(`<red>Error:</red> ${to_username} is offline or does not exist.`)
@@ -166,10 +156,16 @@ const commands = {
         });
     },
 
-    // join(room_id){                                                   //TODO: issue #14
-    //     socket.emit('joinGame', username, room_id (response) => {
-    //     window.location.href = `game.html?roomId=${response.split('/').pop()}`; // Extract the room ID from the response
-    // }
+    join(room_id){                                                   //TODO: issue #14
+        socket.emit('requestJoin', username, room_id, (response) => {
+            term.echo(response.message)
+            if (response.room_exists){
+                if(response.invitation){
+                    window.location.href = `game.html?roomId=${room_id}`;
+                }
+            }
+        });
+    }
 };
 
 socket.on('chat message', (msg) => {

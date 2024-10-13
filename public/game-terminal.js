@@ -98,7 +98,7 @@ const commands = {
     },
 
     refresh(){
-        this.exec('clear');
+        term.exec('clear');
         ready();
     },
    
@@ -127,7 +127,7 @@ const commands = {
     },
 
     exit: function() {  // Define exit as a function reference
-        this.exec('leave'); // Call logout when exit is invoked
+        term.exec('leave'); // Call logout when exit is invoked
     },
 
     say(message) {
@@ -189,7 +189,7 @@ const commands = {
     },
 
     who() {
-        this.exec('list users lobby');
+        term.exec('list users lobby');
     },
 
     whisper(to_username, message){
@@ -207,7 +207,7 @@ const commands = {
 
     setname(new_name){
         //TODO: this
-        this.exec('refresh');
+        term.exec('refresh');
     },
     
     invite(user){
@@ -326,6 +326,17 @@ function ready() {
     });
 }
 
+term.on('click', 'a', function(event) {
+    event.preventDefault(); // Prevent default action of the link (which would be navigating to '#')
+    
+    const text = $(this).text();
+    const match = text.match(/Let\s(\S+)\sjoin/);
+    if (match && match[1]) {
+        const invited_username = match[1]; // Get the username from the matched pattern
+        socket.emit('letUserJoin', roomId, invited_username, username);
+        term.echo(`<yellow>Invitation sent to ${invited_username}</yellow>`);
+    }
+});
 
 // Function to add host-specific commands       //TODO: Issue #26
 //function addHostCommands() {
