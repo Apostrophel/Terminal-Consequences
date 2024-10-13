@@ -151,18 +151,23 @@ const commands = {
 
     creategame() {
         socket.emit('creategame', username, (response) => {            
-            term.echo(`Game created at: ${response}`);                         
-            window.location.href = `game.html?roomId=${response.split('/').pop()}`; // Extract the room ID from the response
+            term.echo(`Game created at: ${response}`);  
+            roomId = response.split('/').pop();
+            socket.emit('joinGame', roomId, username, (response) => {
+                console.log(`In Game Response: ${response}`);
+            });
+            window.location.href = `game.html?roomId=${roomId}`; // Extract the room ID from the response
         });
     },
 
     join(room_id){                                                  
         socket.emit('requestJoin', username, room_id, (response) => {
-            term.echo(response.message)
-            if (response.room_exists){
-                if(response.invitation){
-                    window.location.href = `game.html?roomId=${room_id}`;
-                }
+            term.echo(response.message);
+            if (response.room_exists && response.invitation){
+                socket.emit('joinGame', room_id, username, (response) => {
+                    console.log(`In Game Response: ${response}`);
+                });
+                window.location.href = `game.html?roomId=${room_id}`;
             }
         });
     }
@@ -178,8 +183,21 @@ socket.on('whisper message', (usr, msg) => {
     }
 });
 
-socket.on('invitation', (invited_user, hostUser, room_id) => {  //TODO: remove invited user here and server
+socket.on('invitation', (hostUser, room_id) => {
     term.echo(`<green>TQ: </green>[[;yellow;]${hostUser} has invited you to join room ${room_id}. Click here to [[!;;;;/game.html?roomId=${room_id}]Join Room]].`);
+
+    // Attach a handler for when the user clicks the link
+    term.on('click', (e) => {
+        const target = $(e.target);
+        // Detect if the user clicked the terminal link
+        if (target.text() === 'Join Room') {            
+            // Emit 'userJoin' when the link is clicked
+            socket.emit('joinGame', room_id, username, (response) => {
+                console.log(`In Game Response: ${response}`);
+            });
+            window.location.href = `/game.html?roomId=${room_id}`;
+        }
+    });
 });
 
 

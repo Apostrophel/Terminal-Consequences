@@ -109,7 +109,7 @@ io.on('connection', (socket) => {
   socket.on('invite', (roomId, invitedUsername, hostUser, callback) => {
     const invitedSocketId = users[invitedUsername];
     if (invitedSocketId) {
-        io.to(invitedSocketId).emit('invitation', invitedUsername, hostUser,  roomId);
+        io.to(invitedSocketId).emit('invitation', hostUser,  roomId);
         rooms[roomId].invited_users.push(invitedUsername);
         callback(`Invitation sent to ${invitedUsername}`);
     } else {
@@ -164,7 +164,7 @@ io.on('connection', (socket) => {
   socket.on('letUserJoin', (roomId, username, hostUser) => {
     const invitedSocketId = users[username];
     if (invitedSocketId) {
-      io.to(invitedSocketId).emit('invitation', username, hostUser, roomId);
+      io.to(invitedSocketId).emit('invitation', hostUser, roomId);
       rooms[roomId].invited_users.push(username);
     }
   });
@@ -205,7 +205,6 @@ io.on('connection', (socket) => {
 
   socket.on('closeLobby', (roomId, callback) => {
     lobbyName = rooms[roomId].settings.gameName;
-    
     users_in_lobby = rooms[roomId].users 
     Object.values(users_in_lobby).forEach((user) => {
       console.log(user);  // Access each user object
