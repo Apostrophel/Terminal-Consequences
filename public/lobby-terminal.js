@@ -26,20 +26,6 @@ let timestamp = new Date().toLocaleTimeString();
 const quit_chat_commands = ['!exit', '!chatmode' ]
 const username = localStorage.getItem('username');
 
-
-// Handle connection status updates from the server
-socket.on('connectionStatus', (status) => {
-    if (status === 'connecting') {
-      console.log('Connecting to the server... Please wait.');
-      term.echo("<yellow> Connecting ...</yellow>")                             //TODO: IMPROVE THIS ANIMATED SOMEHOW, AND MAKE SURE IT IS BELOW THE TQ LOGO / WELCOME Issue #23
-
-    } else if (status === 'connected') {
-      console.log('Successfully connected to the server.');
-      // Update the UI to indicate the connection is successful
-      term.echo("<yellow> Connected!</yellow>")
-    }
-  });
-
 socket.on('connect', () => {
     console.log('Successfully connected to the Socket.IO server');
     socket.emit('userLogin', username);
@@ -170,7 +156,7 @@ const commands = {
         });
     },
 
-    join(room_id){                                                   //TODO: issue #14
+    join(room_id){                                                  
         socket.emit('requestJoin', username, room_id, (response) => {
             term.echo(response.message)
             if (response.room_exists){
@@ -261,9 +247,14 @@ const term = $('body').terminal(function(command, term) {
 
 term.pause();
 function ready() {
-    const welcome_message = render('Terminal Consequences: ');
+    const welcome_message = render('Terminal Consequences');
     term.echo(welcome_message);
     term.echo(`<white>YOU ARE LOGGED IN AS </white> <red>${username}</red> <white> ... Welcome to the chat.</white> \n`);
+    if (socket.connected) {
+        term.echo("<yellow> Connected!</yellow>");
+    } else {
+        term.echo("<yellow> Connecting... </yellow>"); 
+    }
     term.resume();
  }
 

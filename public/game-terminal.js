@@ -307,6 +307,11 @@ function ready() {
          const welcome_message = render('Terminal Consequences: ');
          term.echo(welcome_message);
          term.echo(`<white> User: </white> <red>${username}</red> <white> ... Welcome to Game: ${lobby_name}.</white> \n`);
+         if (socket.connected) {
+            term.echo("<yellow> Connected!</yellow>");
+        } else {
+            term.echo("<yellow> Connecting... </yellow>"); 
+        }
          term.resume();
     });
 
