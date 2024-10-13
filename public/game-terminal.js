@@ -40,7 +40,7 @@ socket.on('connect', () => {
 });
 
 socket.on('connect_error', (err) => {
-    term.echo("Connection error: ", err)
+    term.echo(`<red>Connection error: ${err.message}</red>`)
     console.error('Connection Error:', err);
     console.log(err.message);
     console.log(err.description);
