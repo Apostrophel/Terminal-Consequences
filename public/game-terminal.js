@@ -30,14 +30,16 @@ const quit_chat_commands = ['!exit', '!chatmode' ]
 let chatMode = false;
 let timestamp = new Date().toLocaleTimeString(); // 11:18:48
 
-socket.emit('joinGame', roomId, username, (response) => {
-    console.log(`In Game Response: ${response}`);
-});
+
 
 socket.on('connect', () => {
     console.log('Successfully connected to the Socket.IO server and game lobby');
     const username = localStorage.getItem('username');
-    socket.emit('userLogin', username);                                                 //TODO: Change to userJoin ??
+    //socket.emit('userLogin', username);                                                 //TODO: Change to userJoin ??
+    socket.emit('joinGame', roomId, username, (response) => {
+        console.log(`In Game Response: ${response}`);
+    });
+
 });
 
 socket.on('connect_error', (err) => {
@@ -116,14 +118,27 @@ const commands = {
     },
 
     leave() {
-        term.echo('You have left the game, bye!');
-        const username = localStorage.getItem('username');
-        socket.emit('userLeft', username, roomId);
-
-        setTimeout(() => {
-            window.location.href = 'lobby.html'; // Replace with your login page URL
-        }, 500); // 1 second delay for user feedback before redirecting
-
+        if(localStorage.getItem('current_role') === 'host'){
+            term.read('Are you sure you want to close the lobby? y/n ').then(hostInput => {
+                if(hostInput === 'y' || hostInput === 'Y' || hostInput === 'yes' || hostInput === 'Yes' || hostInput === 'YES'){
+                    socket.emit('gameMessage', roomId, `Host (${username}) as left the game and the lobby will close in 5 seconds.`)
+                    setTimeout(() => {
+                        socket.emit('closeLobby', roomId, (response) => {
+                            term.echo(response);
+                            window.location.href = 'lobby.html'; // Replace with your login page URL
+                        });
+                    }, 5000);
+                } 
+            });
+        } else {
+            term.echo('You have left the game, bye!');
+            const username = localStorage.getItem('username');
+            socket.emit('userLeft', username, roomId);
+            setTimeout(() => {
+                window.location.href = 'lobby.html'; // Replace with your login page URL
+            }, 500); // 1 second delay for user feedback before redirecting
+                
+        }
     },
 
     exit: function() {  // Define exit as a function reference
@@ -204,7 +219,8 @@ const commands = {
             } 
         });
     },
-    invite(user){                                                        //TODO: let users try invite command and check if priviliges are granted NEEDS TEST
+
+    invite(user){                                                        //TODO: let users try invite command and check if priviliges are granted NEEDS TESTg
         if(localStorage.getItem('current_role') === 'host' ){
             hostCommands.invite(user); 
         } else {
@@ -241,6 +257,10 @@ socket.on('whisper message', (usr, msg) => {
     if (usr === username){
         term.echo(msg);
     }
+});
+
+socket.on('redirect', (data) => {
+    window.location.href = data.url;  // Redirects the user to the new URL
 });
 
 const command_list = ['clear'].concat(Object.keys(commands));
@@ -352,8 +372,20 @@ term.on('click', 'a', function(event) {
     }
 });
 
+
+
 // Below is to add host-specific commands
 const hostCommands = {
+        closelobby() {
+            term.read('Are you sure you want to close the lobby? y/n ').then(hostInput => {
+                if(hostInput === 'y' || hostInput === 'Y' || hostInput === 'yes' || hostInput === 'Yes' || hostInput === 'YES'){
+                    socket.emit('closeLobby', roomId, (response) => {
+                        term.echo(response);
+                    });
+                }
+            });
+            
+        },
         startgame() {
             term.echo("Not impemented yet");
             socket.emit('startGame', roomId, (response) => {

@@ -203,6 +203,19 @@ io.on('connection', (socket) => {
 
   });
 
+  socket.on('closeLobby', (roomId, callback) => {
+    lobbyName = rooms[roomId].settings.gameName;
+    
+    users_in_lobby = rooms[roomId].users 
+    Object.values(users_in_lobby).forEach((user) => {
+      console.log(user);  // Access each user object
+      io.to(user).emit('redirect', { url: '/lobby.html' });
+    });
+    
+    delete rooms[roomId];
+    callback(`Game Lobby ${roomId} - ${lobbyName} is shut down.`)
+  })
+
   socket.on('disconnect', () => {
       console.log('Client disconnected');
       
