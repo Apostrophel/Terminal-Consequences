@@ -181,6 +181,10 @@ io.on('connection', (socket) => {
     callback(rooms[room_id])
   });
 
+  socket.on('getRoomList', (callback) => {
+    callback(rooms);
+  });
+
   socket.on('changeRoomName', (room_id, new_room_name, callback) =>{
     if(rooms[room_id]){
       rooms[room_id].settings.gameName = new_room_name;

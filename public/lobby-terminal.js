@@ -128,6 +128,20 @@ const commands = {
                     term.echo('No users are currently logged in.');
                 }
             });
+        }
+        else if (variable = 'rooms') {
+            socket.emit('getRoomList', roomList => {
+                number_of_rooms = Object.keys(roomList).length
+                if (number_of_rooms === 0) {
+                    term.echo("No rooms are active.")
+                } else {
+                    const roomEntries = Object.entries(roomList).map(([roomId, roomData]) => {
+                        return `${roomData.settings.host}:${roomId}`;
+                    });
+                    const roomListString = roomEntries.join(', ');
+                    term.echo(`There are currently ${number_of_rooms} rooms: ${roomListString}`)
+                }
+            });
         } else {
             term.echo('list what?');
         }

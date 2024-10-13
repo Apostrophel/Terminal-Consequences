@@ -36,7 +36,7 @@ socket.emit('joinGame', roomId, username, (response) => {
 
 socket.on('connect', () => {
     console.log('Successfully connected to the Socket.IO server and game lobby');
-        const username = localStorage.getItem('username');
+    const username = localStorage.getItem('username');
     socket.emit('userLogin', username);                                                 //TODO: Change to userJoin ??
 });
 
