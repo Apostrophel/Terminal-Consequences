@@ -269,9 +269,9 @@ function ready() {
     term.echo(welcome_message);
     term.echo(`<white>YOU ARE LOGGED IN AS </white> <red>${username}</red> <white> ... Welcome to the chat.</white> \n`);
     if (socket.connected) {
-        term.echo("<yellow> Connected!</yellow>");
+        term.echo("<yellow>Connected!</yellow>");
     } else {
-        term.echo("<yellow> Connecting... </yellow>"); 
+        term.echo("<yellow>Connecting... </yellow>"); 
     }
     term.resume();
  }
@@ -291,6 +291,5 @@ term.on('click', '.command', function() {
  });
 
 socket.on('disconnect', () => {                                 
-    console.log(`Client disconnected: ${username}`);        
-    socket.emit('userLogout', username);
+    console.log(`Client disconnected: ${username}`);     
 });

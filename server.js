@@ -146,11 +146,19 @@ io.on('connection', (socket) => {
 
           host_username = rooms[roomId].settings.host;
           host_socketID = users[host_username];
-          console.log(`Host socket: ${host_socketID}, host user: ${host_username}`);
 
-          io.to(roomId).emit('gameMessage', `<green>Game Lobby: </green>${username} has requested to join the game lobby!`); 
-          io.to(host_socketID).emit('gameMessage', 
-            `<green>Game Lobby: </green>${username} has requested to join the game lobby! [[!;;;;#]Let ${username} join]`);
+          const host_socket = io.sockets.sockets.get(host_socketID);
+          console.log(`Host socket: ${host_socketID}, host user: ${host_username}, Socket exists: ${!!host_socket}`);
+
+          if (host_socket) {
+              // Notify the room and the host specifically about the join request
+              io.to(roomId).emit('gameMessage', `<green>Game Lobby: </green>${username} has requested to join the game lobby!`);
+              
+              io.to(host_socketID).emit('gameMessage', 
+                `<green>Game Lobby: </green>[[!;;;;#]Let ${username} join].`);
+          } else {
+              console.log('Host is not connected');
+          }
 
           callback({ room_exists: true, invitation: false,  message: `<green>TQ: </green><yellow>An invitation request has been sent to the host of game: ${roomId}.</yellow>` })
         }
@@ -215,14 +223,45 @@ io.on('connection', (socket) => {
     callback(`Game Lobby ${roomId} - ${lobbyName} is shut down.`)
   })
 
+  // socket.on('ready', (callback) => {
+  //   //io.to(user).emit('connectedAndReady', message)
+  //   callback("<yellow>Connected!</yellow>");
+  
+  // });
+
   socket.on('disconnect', () => {
       console.log('Client disconnected');
       
   });
 });
 
+
+
 app.use("/api", authRoutes);
 connectDB();
+
+
+// app.get('/', (req, res) => {
+//   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// });
+
+// app.get('/index.html', (req, res) => {
+//   res.redirect('/'); // Redirect to the root URL
+// });
+
+// // Serve the lobby page at a different route
+// app.get('/lobby', (req, res) => {
+//   res.sendFile(path.join(__dirname, 'public', 'lobby.html'));
+// });
+
+// app.get('/lobby.html', (req, res) => {
+//   res.redirect('/lobby');
+// });
+
+// 404 error handling
+app.use((req, res, next) => {
+  res.status(404).redirect('/'); // Redirect to the home page
+});
 
 server.listen(port, () => {
   if(isDevelopment){
