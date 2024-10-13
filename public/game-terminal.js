@@ -66,9 +66,9 @@ const commands = {
 
                 if( localStorage.getItem('current_role') === 'host'){
                     if (command_name != null) {
-                        term.echo(`No spesific information on ${command_name} \nList of available commands: ${commands_formatted_for_help}.`);
+                        term.echo(`No spesific information on ${command_name} \nList of available commands: ${host_commands_formatted_for_help}.`);
                     } else {
-                        term.echo(`List of available HOST commands: ${commands_formatted_for_help}. Type help *command* for info on spesific command.`);
+                        term.echo(`List of available commands: ${host_commands_formatted_for_help}. Type help *command* for info on spesific command.`);
                     }   
                 } else {
 
@@ -344,9 +344,8 @@ term.on('click', 'a', function(event) {
     }
 });
 
-// Function to add host-specific commands       //TODO: Issue #26
-//function addHostCommands() {
-    const hostCommands = {
+// Below is to add host-specific commands       //TODO: Issue #26
+const hostCommands = {
         startgame() {
             term.echo("Not impemented yet");
             socket.emit('startGame', roomId, (response) => {
@@ -373,15 +372,9 @@ term.on('click', 'a', function(event) {
             });
         },
     };
-    //Object.assign(commands, hostCommands); // Extend the existing commands object
-//}
 
 function addHostCommands() {
-    // Object.keys(hostCommands).forEach(commandName => {
-    //     commands[commandName] = hostCommands[commandName];  // Assign the function to the commands object
-    // });
     Object.assign(commands, hostCommands); // Extend the existing commands object
-
 }
 
 function updateCommandListAndFormatting() {
@@ -394,7 +387,7 @@ function updateCommandListAndFormatting() {
     });
 
     // Update the help variable with the new command list
-    help = formatter.format(formatted_list);
+    host_commands_formatted_for_help = formatter.format(formatted_list);
 
     // Update the regular expressions with the new command list
     const any_command_re = new RegExp(`^\\s*(${command_list.join('|')})`);
