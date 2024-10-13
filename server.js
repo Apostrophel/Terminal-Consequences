@@ -121,17 +121,16 @@ io.on('connection', (socket) => {
   socket.on('joinGame', (roomId, username, callback) => {
        if (rooms[roomId]) {
           socket.join(roomId);
-          
-          // if (Object.keys(rooms[roomId].users).length === 0){
-          //   rooms[roomId].users[username] = { role: 'host' };   
-          // } else { 
-          //   rooms[roomId].users[username] = { role: 'guest' };
-          // }
+
+          const userAlreadyJoined = rooms[roomId].users[username];
+
           rooms[roomId].users[username] = socket.id;
 
           callback(`Joined game lobby: ${roomId}`);
           rooms[roomId].invited_users = rooms[roomId].invited_users.filter(user => user !== username);                  //Withdraw the invite after user joined
-          io.to(roomId).emit('gameMessage', `<green>Game Lobby: </green>${username} has joined the game lobby!`);   //TODO: This HAPPENS EVERY REFRESH, fix please.
+          if(!userAlreadyJoined){
+            io.to(roomId).emit('gameMessage', `<green>Game Lobby: </green>${username} has joined the game lobby!`);   //TODO: issue #31
+          }
       } else {
           callback(`Room ${roomId} does not exist.`);
       }
@@ -147,6 +146,7 @@ io.on('connection', (socket) => {
 
           host_username = rooms[roomId].settings.host;
           host_socketID = users[host_username];
+          console.log(`Host socket: ${host_socketID}, host user: ${host_username}`);
 
           io.to(roomId).emit('gameMessage', `<green>Game Lobby: </green>${username} has requested to join the game lobby!`); 
           io.to(host_socketID).emit('gameMessage', 

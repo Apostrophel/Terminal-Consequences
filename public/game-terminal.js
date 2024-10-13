@@ -34,7 +34,7 @@ let timestamp = new Date().toLocaleTimeString(); // 11:18:48
 
 socket.on('connect', () => {
     console.log('Successfully connected to the Socket.IO server and game lobby');
-    const username = localStorage.getItem('username');
+    //const username = localStorage.getItem('username');
     //socket.emit('userLogin', username);                                                 //TODO: Change to userJoin ??
     socket.emit('joinGame', roomId, username, (response) => {
         console.log(`In Game Response: ${response}`);
@@ -119,7 +119,7 @@ const commands = {
 
     leave() {
         if(localStorage.getItem('current_role') === 'host'){
-            term.read('Are you sure you want to close the lobby? y/n ').then(hostInput => {
+            term.read('Are you sure you want to close the lobby? (y/n): ').then(hostInput => {
                 if(hostInput === 'y' || hostInput === 'Y' || hostInput === 'yes' || hostInput === 'Yes' || hostInput === 'YES'){
                     socket.emit('gameMessage', roomId, `Host (${username}) as left the game and the lobby will close in 5 seconds.`)
                     setTimeout(() => {
@@ -332,9 +332,9 @@ function ready() {
          term.echo(welcome_message);
          term.echo(`<white> User: </white> <red>${username}</red> <white> ... Welcome to Game: ${lobby_name}.</white> \n`);
          if (socket.connected) {
-            term.echo("<yellow> Connected!</yellow>");
+            term.echo("<yellow>Connected!</yellow>");
         } else {
-            term.echo("<yellow> Connecting... </yellow>"); 
+            term.echo("<yellow>Connecting... </yellow>"); 
         }
          term.resume();
     });
