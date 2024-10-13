@@ -28,6 +28,19 @@ const quit_chat_commands = ['!exit', '!chatmode' ]
 const username = localStorage.getItem('username');
 
 
+// Handle connection status updates from the server
+socket.on('connectionStatus', (status) => {
+    if (status === 'connecting') {
+      console.log('Connecting to the server... Please wait.');
+      term.echo("<yellow> Connecting ...</yellow>")                             //TODO: IMPROVE THIS ANIMATED SOMEHOW, AND MAKE SURE IT IS BELOW THE TQ LOGO / WELCOME Issue #23
+
+    } else if (status === 'connected') {
+      console.log('Successfully connected to the server.');
+      // Update the UI to indicate the connection is successful
+      term.echo("<yellow> Connected!</yellow>")
+    }
+  });
+
 socket.on('connect', () => {
     console.log('Successfully connected to the Socket.IO server');
     socket.emit('userLogin', username);
