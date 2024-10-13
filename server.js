@@ -93,7 +93,8 @@ io.on('connection', (socket) => {
           host: username,
           gameName: `${username}'s Game`, // Default game name
           maxPlayers: 4, // Example of a default setting
-          isStarted: false // Game state
+          isStarted: false, // Game state
+          guestInvite: false  //Set if guests also can invite other users
         },
         invited_users: [],    //store list of invited users (usernames)
         users: {}, // Store users and their roles

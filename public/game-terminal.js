@@ -204,27 +204,24 @@ const commands = {
             } 
         });
     },
-
-    setname(new_name){
-        socket.emit('changeRoomName', roomId, new_name, (callback) => {
-            term.echo(callback)
-            term.exec('refresh');
-        });
-    },
-    
-    invite(user){
-        socket.emit('requestUserList', (users) => {
-            if (users[user]){
-                    socket.emit('invite', roomId, user, username, (callback) => {
-                    term.echo(callback)
-                });
-            }else {
-                term.echo(`<red>Error:</red> ${user} is offline or does not exist.`)
-            }
-    
-        });
-       
-    }
+    // invite(user){                                                        //TODO: let users try invite command and check if priviliges are granted
+    //     socket.emit('getRoomData', roomData => {
+    //         guest_invite_enabled = roomData.settings.guestInvite;
+    //         if(guest_invite_enabled){
+    //             socket.emit('requestUserList', (users) => {
+    //                 if (users[user]){
+    //                         socket.emit('invite', roomId, user, username, (callback) => {
+    //                         term.echo(callback)
+    //                     });
+    //                 }else {
+    //                     term.echo(`<red>Error:</red> ${user} is offline or does not exist.`)
+    //                 }
+    //             });
+    //         } else {
+    //             term.echo(`<red>Host has not granted invite privileges.</red>`)
+    //         }
+    //     });
+    // },
 
 };
 
@@ -344,7 +341,7 @@ term.on('click', 'a', function(event) {
     }
 });
 
-// Below is to add host-specific commands       //TODO: Issue #26
+// Below is to add host-specific commands
 const hostCommands = {
         startgame() {
             term.echo("Not impemented yet");
@@ -369,6 +366,25 @@ const hostCommands = {
         setrole(username, role) {
             socket.emit('setUserRole', roomId, username, role, (response) => {
                 term.echo(response);
+            });
+        },
+
+        setname(new_name){
+            socket.emit('changeRoomName', roomId, new_name, (callback) => {
+                term.echo(callback)
+                term.exec('refresh');
+            });
+        },
+        
+        invite(user){
+            socket.emit('requestUserList', (users) => {
+                if (users[user]){
+                        socket.emit('invite', roomId, user, username, (callback) => {
+                        term.echo(callback)
+                    });
+                }else {
+                    term.echo(`<red>Error:</red> ${user} is offline or does not exist.`)
+                }
             });
         },
     };
