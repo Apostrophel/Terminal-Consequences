@@ -94,12 +94,12 @@ const commands = {
         term.exec('logout');
     },
 
-    say(message) {
-        if (username && message) {
-            const fullMessage = message.split(' ').slice(1).join(' '); // Capture everything after "say"
-            socket.emit('chatMessage', username, mainLobbyId || null, fullMessage); // Ensure roomId is not undefined
-        } else if (message == null) {
-            term.echo('Please provide message.');
+    say(...args) {
+        if (username && args.length > 0) {
+            let message = args.join(' ');
+            socket.emit('chatMessage', username, mainLobbyId || null, message);
+        } else if (args.length === 0) {
+            term.echo('Please provide a message.');
         } else {
             term.echo('Please log in to chat.');
         }
