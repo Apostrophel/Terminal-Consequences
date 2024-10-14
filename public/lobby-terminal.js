@@ -96,7 +96,8 @@ const commands = {
 
     say(message) {
         if (username && message) {
-            socket.emit('chatMessage', username, mainLobbyId || null, message); // Ensure roomId is not undefined
+            const fullMessage = message.split(' ').slice(1).join(' '); // Capture everything after "say"
+            socket.emit('chatMessage', username, mainLobbyId || null, fullMessage); // Ensure roomId is not undefined
         } else if (message == null) {
             term.echo('Please provide message.');
         } else {
