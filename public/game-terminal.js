@@ -145,15 +145,18 @@ const commands = {
         term.exec('leave');
     },
 
-    say(message) {
+
+    say(...args) {
         const username = localStorage.getItem('username');
+        if (username && args.length > 0) {
+            let message = args.join(' ');
+            socket.emit('gameMessage', username, roomId || null, message);          //TODO: change to charachter name ??
+            
+            let timestamp = new Date().toLocaleTimeString();
+            term.echo(`${timestamp} ${username}:\t\t${message}`); 
 
-        if (username && message) {
-            const chatMessage = `${timestamp}  ${username}:\t\t${message}`;
-            socket.emit('gameMessage', roomId, chatMessage);                      //TODO: Change to ***character name***
-
-        } else if (message == null) {
-            term.echo('Please provide message.');
+        } else if (args.length === 0) {
+            term.echo('Please provide a message.');
         } else {
             term.echo('Please log in to chat.');
         }
@@ -202,17 +205,27 @@ const commands = {
         term.exec('list users lobby');
     },
 
-    whisper(to_username, message){
-        socket.emit('requestUserList', (users) => {
-            if (users[to_username]){
-                const username = localStorage.getItem('username');
-                const whisperMessage = `${timestamp}  ${username} whispers: \t\t<pink>${message}</pink>`;
-                socket.emit('whisper message', to_username, whisperMessage);           
-                term.echo(whisperMessage);
-            } else {
-                term.echo(`<red>Error:</red> ${to_username} is offline or does not exist.`)
-            } 
-        });
+    whisper(to_username, ...args){
+        if(to_username && args.length > 0){
+            let message = args.join(' ');
+            socket.emit('requestUserList', (users) => {
+                if (users[to_username]){
+                    const username = localStorage.getItem('username');
+                    const whisperMessage = `${timestamp}  ${username} whispers: \t\t<pink>${message}</pink>`;
+                    socket.emit('whisper message', to_username, whisperMessage);             
+                    term.echo(whisperMessage);
+                } else {
+                    term.echo(`<white>${username}</white>@tq.game> <white>whisper</white> <aqua>${to_username} ${args.join(' ')}</aqua>`)
+                    term.echo(`<red>Error:</red> ${to_username} is offline or does not exist.`)
+                } 
+            });
+        } else if (to_username && args.length === 0){
+            term.echo(`<white>${username}</white>@tq.game> <white>whisper</white> <aqua>${to_username} ${args.join(' ')}</aqua>`)
+            term.echo("<red>Provide a username and message.</red>")
+        } else {
+            term.echo(`<white>${username}</white>@tq.game> <white>whisper</white>`)
+            term.echo("<red>Provide a username and message.</red>")
+        }
     },
 
     invite(user){                                                        //TODO: guestInvite set command AND check if user already joined
@@ -299,9 +312,26 @@ const hostCommands = {
 };
 
 // Listen for game messages and display them
-socket.on('gameMessage', msg => {
-    console.log(`Received from server: ${msg}`)
+socket.on('gameMessage', (msg) => {
+    const username = localStorage.getItem('username');
+    console.log(msg)
+    const new_chat_username = msg.split(' ')[2].split(':')[0] // Extract the username from the msg
+    if (new_chat_username !== username) {
         term.echo(msg);
+    }
+});
+
+socket.on('loadChatHistory', (chatLogs) => {
+    if (chatLogs && Array.isArray(chatLogs)) {
+        chatLogs.reverse().forEach(log => {
+            const log_username = log.userId;
+            const log_message = log.message;
+            const log_timestamp = new Date(log.timestamp).toLocaleTimeString(); // Assuming log has a timestamp
+            term.echo(`${log_timestamp} ${log_username}:\t\t${log_message}`);
+        });
+    } else {
+        term.echo('No chat logs found.');
+    }
 });
 
 // Listen for whisper messages and display them             //TODO: change this to a socket message directly to user?
@@ -346,17 +376,22 @@ const term = $('body').terminal(function(command, term) {
         if (quit_chat_commands.includes(command.trim().toLowerCase())) {
             chatMode = false;
             term.echo('<yellow>Chat mode deactivated. You are back to command mode.</yellow>');
-            term.set_prompt(`<white>${username}</white>@tq.lobby> `)
+            term.set_prompt(`<white>${username}</white>@tq.game> `)
         } else {
             const timestamp = new Date().toLocaleTimeString();
-            const chatMessage = `${timestamp} ${username}:\t\t${command}`; 
-            socket.emit('gameMessage', roomId, chatMessage);                               //TODO: Change to ***character name***
-
+            term.echo(`${timestamp} ${username}:\t\t${command}`);             //TODO: Change to ***character name***
+            socket.emit('gameMessage', username, roomId || null, command); // Ensure roomId is not undefined
         }
     } else {
         const parts = command.trim().split(/\s+/);
         const cmd = parts[0];  
         const args = parts.slice(1); 
+
+        if (cmd !== 'say' && cmd !== 'whisper'){
+            if (commands.hasOwnProperty(cmd) || hostCommands.hasOwnProperty(cmd)) {
+                echoCommand(`<white>${username}</white>@tq.game> <white>${cmd}</white> <aqua>${args.join(' ')}</aqua>`);
+            }
+        }
         if (commands[cmd]) {
             commands[cmd](...args);
         } else {
@@ -377,7 +412,8 @@ const term = $('body').terminal(function(command, term) {
         }
     },
     prompt: `<white>${username}</white>@tq.game> `,
-    history: true
+    history: true,
+    echoCommand: false
 });
 
 
@@ -391,7 +427,12 @@ function ready() {
         const welcome_message = render('Terminal Consequences: ');
         term.echo(welcome_message);
         term.echo(`<white> User: </white> <red>${username}</red> <white> ... Welcome to Game: ${lobby_name}.</white> \n`);
-        
+        if (socket.connected) {
+            term.echo("<yellow>Connected!</yellow>");       //TODO: this is not working as intened ?
+        } else {
+            term.echo("<yellow>Connecting... </yellow>"); 
+        }
+
         if(roomData.settings.host === username){
             localStorage.setItem('current_role', 'host');
         } else {
@@ -401,9 +442,7 @@ function ready() {
             term.echo('<green>Game Lobby: </green>You are the host! ');
             addHostCommands();   
         }
-        if (socket.connected){
-            term.echo("<yellow>Connected!</yellow>");       //TODO: this is not working as intened ?
-        }
+
     });
 
     socket.emit('getRoomUsers', roomId, (callback) => {
@@ -411,10 +450,13 @@ function ready() {
         term.echo(`<green>Game Lobby: </green>Users in lobby: ${lobby_clients}`);
     });
 
-    if (!socket.connected) {
-        term.echo("<yellow>Connecting... </yellow>"); 
-    }
+ 
+    socket.emit('requestChatLog', roomId);
     term.resume();
+}
+
+function echoCommand(line){
+    term.echo(line);
 }
 
 term.on('click', 'a', function(event) {

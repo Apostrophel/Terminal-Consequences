@@ -93,19 +93,11 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Add event listeners here, e.g.:
   socket.on('chatMessage',  async (user_id, room_id, msg) => {
-    //console.log("Received message:", { user_id, room_id, msg }); // Log the received parameters
     const messageId = uuidv4(); // or use any other unique ID generator
 
     try {
       await insertChatLog(messageId, room_id, user_id, msg); // Pass parameters in the correct order
-      // console.log("Message saved to chat logs:", {
-      //     mesgId: messageId,
-      //     userId: user_id,
-      //     roomId: room_id || null,
-      //     message: msg,
-      // });
     } catch (error) {
       console.error("Error saving chat log:", error);
     }
@@ -215,8 +207,20 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('gameMessage', (roomId, message) => {
-      io.to(roomId).emit('gameMessage', message);
+  socket.on('gameMessage', async (user_id, room_id, msg) => {
+      console.log("Received message:", { user_id, room_id, msg }); // Log the received parameters
+      const messageId = uuidv4(); // or use any other unique ID generator
+      
+      try {
+        await insertChatLog(messageId, room_id, user_id, msg); // Pass parameters in the correct order
+      } catch (error) {
+        console.error("Error saving game chat log:", error);
+      }
+
+      let timestamp = new Date().toLocaleTimeString();
+      const chatMessage = `${timestamp}  ${user_id}:\t\t${msg}`;
+
+      io.to(room_id).emit('gameMessage', chatMessage);
   });
 
   socket.on('getRoomUsers', (room_id, callback) => {
