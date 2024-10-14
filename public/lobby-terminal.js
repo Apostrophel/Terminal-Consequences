@@ -98,6 +98,10 @@ const commands = {
         if (username && args.length > 0) {
             let message = args.join(' ');
             socket.emit('chatMessage', username, mainLobbyId || null, message);
+            
+            let timestamp = new Date().toLocaleTimeString();
+            term.echo(`${timestamp} ${username}:\t\t${message}`); 
+
         } else if (args.length === 0) {
             term.echo('Please provide a message.');
         } else {
@@ -116,7 +120,7 @@ const commands = {
                 }
             });
         }
-        else if (variable = 'rooms') {
+        else if (variable === 'rooms') {
             socket.emit('getRoomList', roomList => {
                 number_of_rooms = Object.keys(roomList).length
                 if (number_of_rooms === 0) {
@@ -138,16 +142,26 @@ const commands = {
         term.exec('list users');
     },
 
-    whisper(to_username, message){
-        socket.emit('requestUserList', (users) => {
-            if (users[to_username]){
-                const whisperMessage = `${timestamp}  ${username} whispers: \t\t<pink>${message}</pink>`;
-                socket.emit('whisper message', to_username, whisperMessage);             
-                term.echo(whisperMessage);
-            } else {
-                term.echo(`<red>Error:</red> ${to_username} is offline or does not exist.`)
-            } 
-        });
+    whisper(to_username, ...args){
+        if(to_username && args.length > 0){
+            let message = args.join(' ');
+            socket.emit('requestUserList', (users) => {
+                if (users[to_username]){
+                    const whisperMessage = `${timestamp}  ${username} whispers: \t\t<pink>${message}</pink>`;
+                    socket.emit('whisper message', to_username, whisperMessage);             
+                    term.echo(whisperMessage);
+                } else {
+                    term.echo(`<white>${username}</white>@tq.lobby> <white>whisper</white> <aqua>${to_username} ${args.join(' ')}</aqua>`)
+                    term.echo(`<red>Error:</red> ${to_username} is offline or does not exist.`)
+                } 
+            });
+        } else if (to_username && args.length === 0){
+            term.echo(`<white>${username}</white>@tq.lobby> <white>whisper</white> <aqua>${to_username} ${args.join(' ')}</aqua>`)
+            term.echo("<red>Provide a username and message.</red>")
+        } else {
+            term.echo(`<white>${username}</white>@tq.lobby> <white>whisper</white>`)
+            term.echo("<red>Provide a username and message.</red>")
+        }
     },
 
     creategame() {
@@ -175,7 +189,10 @@ const commands = {
 };
 
 socket.on('chatMessage', (msg) => {
-    term.echo(msg);
+    const new_chat_username = msg.split(' ')[2].split(':')[0] // Extract the username from the msg
+    if (new_chat_username !== username) {
+        term.echo(msg);
+    }
 });
 
 socket.on('loadChatHistory', (chatLogs) => {
@@ -239,19 +256,27 @@ figlet.defaults({ fontPath: 'https://unpkg.com/figlet/fonts/' });
 figlet.preloadFonts([font], ready);
 
 // Set up jQuery Terminal:
-const term = $('body').terminal(function(command, term) {    
+const term = $('body').terminal(function(command, term) {
     if (chatMode) {
         if (quit_chat_commands.includes(command.trim().toLowerCase())) {
             chatMode = false;
             term.echo('<yellow>Chat mode deactivated. You are back to command mode.</yellow>');
             term.set_prompt(`<white>${username}</white>@tq.lobby> `)
         } else {
+            let timestamp = new Date().toLocaleTimeString();
+            term.echo(`${timestamp} ${username}:\t\t${command}`); 
             socket.emit('chatMessage', username, mainLobbyId || null, command); // Ensure roomId is not undefined
         }
     } else {
         const parts = command.trim().split(/\s+/);
         const cmd = parts[0];  
-        const args = parts.slice(1); 
+        const args = parts.slice(1);
+
+        if (cmd !== 'say' && cmd !== 'whisper'){
+            if (commands.hasOwnProperty(cmd)) {
+                echoCommand(`<white>${username}</white>@tq.lobby> <white>${cmd}</white> <aqua>${args.join(' ')}</aqua>`);
+            }
+        }
         if (commands[cmd]) {
             commands[cmd](...args);
         } else {
@@ -272,7 +297,8 @@ const term = $('body').terminal(function(command, term) {
         }
     },
     prompt: `<white>${username}</white>@tq.lobby> `,
-    history: true
+    history: true,
+    echoCommand: false
 });
 
 term.pause();
@@ -281,7 +307,7 @@ function ready() {
     term.echo(welcome_message);
     term.echo(`<white>YOU ARE LOGGED IN AS </white> <red>${username}</red> <white> ... Welcome to the chat.</white> \n`);
     if (socket.connected) {
-        term.echo("<yellow>Connected!</yellow>");       //TODO: this is not working as intened
+        term.echo("<yellow>Connected!</yellow>");       //TODO: this is not working as intened ?
     } else {
         term.echo("<yellow>Connecting... </yellow>"); 
     }
@@ -296,6 +322,10 @@ function render(text) {
         width: cols,
         whitespaceBreak: true
     });
+}
+
+function echoCommand(line){
+    term.echo(line);
 }
 
 term.on('click', '.command', function() {

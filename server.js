@@ -100,16 +100,15 @@ io.on('connection', (socket) => {
 
     try {
       await insertChatLog(messageId, room_id, user_id, msg); // Pass parameters in the correct order
-      console.log("Message saved to chat logs:", {
-          mesgId: messageId,
-          userId: user_id,
-          roomId: room_id || null,
-          message: msg,
-      });
-  } catch (error) {
+      // console.log("Message saved to chat logs:", {
+      //     mesgId: messageId,
+      //     userId: user_id,
+      //     roomId: room_id || null,
+      //     message: msg,
+      // });
+    } catch (error) {
       console.error("Error saving chat log:", error);
-  }
-
+    }
 
     let timestamp = new Date().toLocaleTimeString();
     const chatMessage = `${timestamp}  ${user_id}:\t\t${msg}`;
