@@ -63,8 +63,23 @@ const insertRecord = (tableName, record) => {
   });
 };
 
+const getChatLogs = (roomId) => {
+  return new Promise((resolve, reject) => {
+    const query = `SELECT * FROM chat_logs WHERE roomId = ? ORDER BY timestamp DESC LIMIT 50`; // Retrieves the latest 50 messages
+
+    pool.query(query, [roomId], (err, results) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(results);
+      }
+    });
+  });
+};
+
 module.exports = {
    createTable,
    checkRecordExists,
    insertRecord,
+   getChatLogs,
 };

@@ -17,7 +17,6 @@
  * @author: sjurbarndon@proton.me
  */
 
-
 const { v4: uuidv4 } = require("uuid");
 const jwt = require("jsonwebtoken");
 const userSchema = require("../schemas/userSchema");

@@ -25,6 +25,7 @@ let chatMode = false;
 let timestamp = new Date().toLocaleTimeString();
 const quit_chat_commands = ['!exit', '!chatmode' ]
 const username = localStorage.getItem('username');
+const mainLobbyId = 'mainLobby';
 
 socket.on('connect', () => {
     console.log('Successfully connected to the Socket.IO server');
@@ -95,8 +96,7 @@ const commands = {
 
     say(message) {
         if (username && message) {
-            const chatMessage = `${timestamp}  ${username}:\t\t${message}`;
-            socket.emit('chat message', chatMessage);
+            socket.emit('chatMessage', username, mainLobbyId || null, message); // Ensure roomId is not undefined
         } else if (message == null) {
             term.echo('Please provide message.');
         } else {
@@ -173,8 +173,21 @@ const commands = {
     }
 };
 
-socket.on('chat message', (msg) => {
+socket.on('chatMessage', (msg) => {
     term.echo(msg);
+});
+
+socket.on('loadChatHistory', (chatLogs) => {
+    if (chatLogs && Array.isArray(chatLogs)) {
+        chatLogs.reverse().forEach(log => {
+            const log_username = log.userId;
+            const log_message = log.message;
+            const log_timestamp = new Date(log.timestamp).toLocaleTimeString(); // Assuming log has a timestamp
+            term.echo(`${log_timestamp} ${log_username}:\t\t${log_message}`);
+        });
+    } else {
+        term.echo('No chat logs found.');
+    }
 });
 
 socket.on('whisper message', (usr, msg) => {
@@ -232,9 +245,7 @@ const term = $('body').terminal(function(command, term) {
             term.echo('<yellow>Chat mode deactivated. You are back to command mode.</yellow>');
             term.set_prompt(`<white>${username}</white>@tq.lobby> `)
         } else {
-            const timestamp = new Date().toLocaleTimeString();
-            const chatMessage = `${timestamp} ${username}:\t\t${command}`; 
-            socket.emit('chat message', chatMessage);
+            socket.emit('chatMessage', username, mainLobbyId || null, command); // Ensure roomId is not undefined
         }
     } else {
         const parts = command.trim().split(/\s+/);
@@ -273,6 +284,7 @@ function ready() {
     } else {
         term.echo("<yellow>Connecting... </yellow>"); 
     }
+    socket.emit('requestChatLog', mainLobbyId);
     term.resume();
  }
 

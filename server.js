@@ -16,6 +16,7 @@ const connectDB = require("./db/db");
 const http = require('http');
 const socketIo = require('socket.io');
 const authRoutes = require("./routes/authRoutes");
+const { initializeChatLogs, insertChatLog, retrieveChatLogs } = require('./controllers/chatDbControllers');
 const port = process.env.PORT;
 const app = express();
 const server = http.createServer(app);
@@ -49,18 +50,29 @@ app.use(express.static('public'));
 
 const users = {}; // Array to store logged-in users
 const rooms = {}; // Store active rooms with user data
+const mainLobbyId = 'mainLobby';
+
+
+// Initialise the chat log database when the server starts
+initializeChatLogs().then(() => { 
+  console.log("Chat logs table initialized.");
+}).catch((error) => {
+  console.error("Failed to initialize chat logs table:", error);
+});
  
 // Socket.IO connection
 io.on('connection', (socket) => {
   socket.emit('connectionStatus', 'connecting');
 
   let username; // Declare username for this connection
-  socket.on('userLogin', (user) => {
+  socket.on('userLogin', async (user) => {
     username = user; // Assign the username when the user logs in
     console.log("New client connected: ", username, ". Users: ", users)
     users[username] = socket.id;  
     socket.emit('connectionStatus', 'connected');
   });
+
+
 
   socket.on('userLogout', user_name => {
     if (users[user_name]) {
@@ -72,9 +84,36 @@ io.on('connection', (socket) => {
     callback(users);
   });
 
+  socket.on('requestChatLog', async (roomId) => {
+    try {
+      const chatLogs = await retrieveChatLogs(roomId); // Retrieve chat logs from the database
+      socket.emit('loadChatHistory', chatLogs); // Emit the chat logs to the client
+    } catch (error) {
+      console.error("Error retrieving chat logs:", error);
+    }
+  });
+
   // Add event listeners here, e.g.:
-  socket.on('chat message', (msg) => {
-    io.emit('chat message', msg);
+  socket.on('chatMessage',  async (user_id, room_id, msg) => {
+    //console.log("Received message:", { user_id, room_id, msg }); // Log the received parameters
+    const messageId = uuidv4(); // or use any other unique ID generator
+
+    try {
+      await insertChatLog(messageId, room_id, user_id, msg); // Pass parameters in the correct order
+      console.log("Message saved to chat logs:", {
+          mesgId: messageId,
+          userId: user_id,
+          roomId: room_id || null,
+          message: msg,
+      });
+  } catch (error) {
+      console.error("Error saving chat log:", error);
+  }
+
+
+    let timestamp = new Date().toLocaleTimeString();
+    const chatMessage = `${timestamp}  ${user_id}:\t\t${msg}`;
+    io.emit('chatMessage', chatMessage);
   });
 
   socket.on('whisper message', (user, msg) =>{
@@ -89,7 +128,7 @@ io.on('connection', (socket) => {
     //const newRoomId = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 4); // 4 is the length of the ID
 
     rooms[newRoomId] = {
-        settings: {
+          settings: {
           host: username,
           gameName: `${username}'s Game`, // Default game name
           maxPlayers: 4, // Example of a default setting
