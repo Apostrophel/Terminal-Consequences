@@ -16,7 +16,7 @@ const connectDB = require("./db/db");
 const http = require('http');
 const socketIo = require('socket.io');
 const authRoutes = require("./routes/authRoutes");
-const { initializeChatLogs, insertChatLog, retrieveChatLogs } = require('./controllers/chatDbControllers');
+const { initializeChatLogs, insertChatLog, deleteChatLogsByRoom, retrieveChatLogs } = require('./controllers/chatDbControllers');
 const port = process.env.PORT;
 const app = express();
 const server = http.createServer(app);
@@ -223,6 +223,10 @@ io.on('connection', (socket) => {
       io.to(room_id).emit('gameMessage', chatMessage);
   });
 
+  socket.on('gameMessageAlert', (room_id, msg) => {
+    io.to(room_id).emit('gameMessageAlert', msg);
+  });
+
   socket.on('getRoomUsers', (room_id, callback) => {
       callback(rooms[room_id].users);
   });
@@ -253,7 +257,7 @@ io.on('connection', (socket) => {
 
   });
 
-  socket.on('closeLobby', (roomId, callback) => {
+  socket.on('closeLobby', async (roomId, callback) => {
     lobbyName = rooms[roomId].settings.gameName;
     users_in_lobby = rooms[roomId].users 
     Object.values(users_in_lobby).forEach((user) => {
@@ -262,6 +266,12 @@ io.on('connection', (socket) => {
     });
     
     delete rooms[roomId];
+    try {
+      await deleteChatLogsByRoom(roomId); // Delete chat logs for the room from the database
+      console.log(`Chat logs for room ${roomId} have been deleted.`);
+    } catch (error) {
+        console.error(`Error deleting chat logs for room ${roomId}:`, error);
+    }
     callback(`Game Lobby ${roomId} - ${lobbyName} is shut down.`)
   })
 

@@ -121,7 +121,7 @@ const commands = {
         if(localStorage.getItem('current_role') === 'host'){
             term.read('Are you sure you want to close the lobby? (y/n): ').then(hostInput => {
                 if(hostInput === 'y' || hostInput === 'Y' || hostInput === 'yes' || hostInput === 'Yes' || hostInput === 'YES'){
-                    socket.emit('gameMessage', roomId, `Host (${username}) as left the game and the lobby will close in 3 seconds.`)
+                    socket.emit('gameMessageAlert', roomId, `<green>Game Lobby: </green>Host (${username}) as left the game and the lobby will close in 3 seconds.`)
                     setTimeout(() => {
                         socket.emit('closeLobby', roomId, (response) => {
                             term.echo(response);
@@ -319,6 +319,9 @@ socket.on('gameMessage', (msg) => {
     if (new_chat_username !== username) {
         term.echo(msg);
     }
+});
+socket.on('gameMessageAlert', (msg) => {
+    term.echo(msg);
 });
 
 socket.on('loadChatHistory', (chatLogs) => {

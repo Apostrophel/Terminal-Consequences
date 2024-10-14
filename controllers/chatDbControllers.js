@@ -19,6 +19,7 @@ const chatlogSchema = require("../schemas/chatlogSchema");
 const {
    createTable,
    insertRecord,
+   deleteRecords,
    getChatLogs,
   } = require("../utils/sqlFunctions");
 
@@ -62,8 +63,20 @@ const retrieveChatLogs = async (roomId) => {
   }
 };
 
+// Function to delete all chat logs for a specific room
+const deleteChatLogsByRoom = async (roomId) => {
+  try {
+    await deleteRecords('chat_logs', { roomId });
+    console.log(`Chat logs for room ${roomId} deleted successfully.`);
+  } catch (error) {
+    console.error(`Error deleting chat logs for room ${roomId}:`, error);
+    throw error; // Rethrow the error to be handled at a higher level if necessary
+  }
+};
+
 module.exports = {
   initializeChatLogs,
   insertChatLog,
   retrieveChatLogs,
+  deleteChatLogsByRoom,
 };

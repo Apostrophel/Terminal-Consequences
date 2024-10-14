@@ -63,6 +63,27 @@ const insertRecord = (tableName, record) => {
   });
 };
 
+// Function to delete records from a specific table
+const deleteRecords = (tableName, conditions) => {
+  return new Promise((resolve, reject) => {
+    const conditionKeys = Object.keys(conditions);
+    const conditionString = conditionKeys.map(key => `${key} = ?`).join(' AND ');
+    const values = Object.values(conditions);
+
+    const query = `DELETE FROM ${tableName} WHERE ${conditionString}`;
+
+    // Use the promise version of the query
+    pool.promise().query(query, values)
+      .then(([results]) => {
+        resolve(results); // Resolve the results
+      })
+      .catch(error => {
+        console.error(`Error deleting records from ${tableName}:`, error);
+        reject(error); // Reject with the error
+      });
+  });
+};
+
 const getChatLogs = (roomId) => {
   return new Promise((resolve, reject) => {
     const query = `SELECT * FROM chat_logs WHERE roomId = ? ORDER BY timestamp DESC LIMIT 25`; // Retrieves the latest 50 messages
@@ -81,5 +102,6 @@ module.exports = {
    createTable,
    checkRecordExists,
    insertRecord,
+   deleteRecords,
    getChatLogs,
 };
