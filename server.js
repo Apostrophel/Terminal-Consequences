@@ -223,12 +223,6 @@ io.on('connection', (socket) => {
     callback(`Game Lobby ${roomId} - ${lobbyName} is shut down.`)
   })
 
-  // socket.on('ready', (callback) => {
-  //   //io.to(user).emit('connectedAndReady', message)
-  //   callback("<yellow>Connected!</yellow>");
-  
-  // });
-
   socket.on('disconnect', () => {
       console.log('Client disconnected');
       

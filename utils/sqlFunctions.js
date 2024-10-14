@@ -1,8 +1,25 @@
+/**
+ * SQL Utility Functions
+ * 
+ * This module provides utility functions for interacting with the MySQL database.
+ * It includes methods to create tables, check for existing records, and insert new records.
+ * All functions return Promises for asynchronous handling.
+ * 
+ * Key Functions:
+ * - `createTable`: Executes a query to create a new table based on a provided schema.
+ * - `checkRecordExists`: Checks if a record exists in a specific table by querying a column for a matching value.
+ * - `insertRecord`: Inserts a new record into a specified table using an object format.
+ * 
+ * @dependencies
+ * - `mysql2`: Library used to execute SQL queries.
+ * - `config`: Database configuration settings imported from the `db/config` module.
+ * 
+ * @project Terminal Consequences
+ * @author: sjurbarndon@proton.me
+ */
+
 const mysql = require("mysql2");
 const config = require("../db/config");
-
-//import mysql from 'mysql2';
-//import config from '../db/config.js'
 
 const pool = mysql.createPool(config);
 
@@ -51,5 +68,3 @@ module.exports = {
    checkRecordExists,
    insertRecord,
 };
-
-//export {createTable, checkRecordExists, insertRecord}; // Use 'export default' instead of 'module.exports'

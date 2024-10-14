@@ -6,4 +6,3 @@ const config = {
   };
   
 module.exports = config;
-//export default config; // Use 'export default' instead of 'module.exports'

@@ -1,3 +1,23 @@
+/**
+ * Authentication Controllers
+ * 
+ * This module provides the controllers responsible for handling user authentication,
+ * including user registration and login functionality. It integrates with the database
+ * to verify credentials, hash passwords using bcrypt, and generate JWT tokens for user sessions.
+ * 
+ * Key Functions:
+ * - `register`: Registers a new user by creating a record in the database with a hashed password.
+ * - `login`: Authenticates a user by verifying their credentials and returning a JWT on success.
+ * 
+ * @dependencies
+ * - `sqlFunctions`: Custom utility functions to interact with the database (createTable, checkRecordExists, insertRecord).
+ * - `userSchema`: Defines the schema for the users table in the database.
+ * 
+ * @project Terminal Consequences
+ * @author: sjurbarndon@proton.me
+ */
+
+
 const { v4: uuidv4 } = require("uuid");
 const jwt = require("jsonwebtoken");
 const userSchema = require("../schemas/userSchema");
@@ -8,12 +28,6 @@ const {
    insertRecord,
   } = require("../utils/sqlFunctions");
 
-
-// import { v4 as uuidv4 } from 'uuid';
-// import jwt from 'jsonwebtoken';
-// import userSchema from '../schemas/userSchema.js'
-// import bcrypt from 'bcryptjs/dist/bcrypt.js';
-// import {createTable, checkRecordExists, insertRecord} from '../utils/sqlFunctions.js'
 
 const generateAccessToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -109,12 +123,7 @@ const login = async (req, res) => {
   }
 };
 
-
-
 module.exports = {
   register,
   login,
 };
-
-
-//export {register, login};

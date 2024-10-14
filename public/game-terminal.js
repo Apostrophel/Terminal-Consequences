@@ -25,7 +25,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const roomId = urlParams.get('roomId');
 console.log(roomId);
 
-const username = localStorage.getItem('username');
+const username = localStorage.getItem('username');  
 const quit_chat_commands = ['!exit', '!chatmode' ]
 let chatMode = false;
 let timestamp = new Date().toLocaleTimeString();

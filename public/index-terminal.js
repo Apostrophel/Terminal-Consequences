@@ -176,7 +176,6 @@ $.terminal.new_formatter([re, function(_, command, args) {
 }]);
 
 term.pause();
-
 function ready() {
     const welcome_message = render('Terminal Consequences');
     term.echo(welcome_message);
