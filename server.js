@@ -103,7 +103,8 @@ io.on('connection', (socket) => {
     }
 
     let timestamp = new Date().toLocaleTimeString();
-    const chatMessage = `${timestamp}  ${user_id}:\t\t${msg}`;
+    const chatMessage = `${timestamp} ${user_id}:\t\t${msg}`;
+
     io.emit('chatMessage', chatMessage);
   });
 
@@ -277,6 +278,8 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
       console.log('Client disconnected');
+
+      
       
   });
 });

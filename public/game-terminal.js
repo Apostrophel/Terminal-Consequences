@@ -368,8 +368,13 @@ $.terminal.new_formatter([re, function(_, command, args) {
     return `<white>${command}</white><aqua>${args}</aqua>`;
 }]);
 
+let onMobile = isMobileDevice();
+let font = 'Elite';  // https://patorjk.com/software/taag/#p=display&f=Bloody&t=Terminal%20Consequences <-- for more fonts ascii art
 
-const font = 'Elite';  // https://patorjk.com/software/taag/#p=display&f=Bloody&t=Terminal%20Consequences <-- for more fonts ascii art
+if (onMobile){
+    font = 'Ogre';
+}
+
 figlet.defaults({ fontPath: 'https://unpkg.com/figlet/fonts/' });
 figlet.preloadFonts([font], ready);
 
@@ -427,7 +432,11 @@ function ready() {
     
     socket.emit('getRoomData', roomId, (roomData) => {
         lobby_name = roomData.settings.gameName;
-        const welcome_message = render('Terminal Consequences: ');
+        let welcome_message = render('Terminal Consequences: ');
+        if (onMobile){
+            welcome_message = render('Terminal\nConsequences:')
+        }
+
         term.echo(welcome_message);
         term.echo(`<white> User: </white> <red>${username}</red> <white> ... Welcome to Game: ${lobby_name}.</white> \n`);
         if (socket.connected) {
@@ -476,6 +485,10 @@ term.on('click', 'a', function(event) {
 
 function addHostCommands() {
     Object.assign(commands, hostCommands); // Extend the existing commands object
+}
+
+function isMobileDevice() {
+    return /Mobi|Android/i.test(navigator.userAgent) || window.innerWidth <= 800;
 }
 
 function render(text) {

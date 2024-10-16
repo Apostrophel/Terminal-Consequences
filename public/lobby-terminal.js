@@ -251,7 +251,13 @@ $.terminal.new_formatter([re, function(_, command, args) {
 }]);
 
 
-const font = 'Bloody';  // https://patorjk.com/software/taag/#p=display&f=Bloody&t=Terminal%20Consequences <-- for more fonts ascii art
+let onMobile = isMobileDevice();
+let font = 'Bloody';  // https://patorjk.com/software/taag/#p=display&f=Bloody&t=Terminal%20Consequences <-- for more fonts ascii art
+
+if (onMobile){
+    font = 'Ogre';
+}
+
 figlet.defaults({ fontPath: 'https://unpkg.com/figlet/fonts/' });
 figlet.preloadFonts([font], ready);
 
@@ -303,7 +309,10 @@ const term = $('body').terminal(function(command, term) {
 
 term.pause();
 function ready() {
-    const welcome_message = render('Terminal Consequences');
+    let welcome_message = render('Terminal Consequences');
+    if (onMobile){
+        welcome_message = render('Terminal\nConsequences')
+    }
     term.echo(welcome_message);
     term.echo(`<white>YOU ARE LOGGED IN AS </white> <red>${username}</red> <white> ... Welcome to the chat.</white> \n`);
     if (socket.connected) {
@@ -322,6 +331,10 @@ function render(text) {
         width: cols,
         whitespaceBreak: true
     });
+}
+
+function isMobileDevice() {
+    return /Mobi|Android/i.test(navigator.userAgent) || window.innerWidth <= 800;
 }
 
 function echoCommand(line){

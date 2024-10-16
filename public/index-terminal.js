@@ -157,7 +157,15 @@ const commands_formatted_for_help = formatter.format(command_formatter);
 const any_command_re = new RegExp(`^\s*(${command_list.join('|')})`);
 const re = new RegExp(`^\s*(${command_list.join('|')})(\s?.*)`);
 
-const font = 'Bloody';  // https://patorjk.com/software/taag/#p=display&f=Bloody&t=Terminal%20Consequences <-- for more fonts ascii art
+let onMobile = isMobileDevice();
+let font = 'Bloody';  // https://patorjk.com/software/taag/#p=display&f=Bloody&t=Terminal%20Consequences <-- for more fonts ascii art
+
+if (onMobile){
+    font = 'Ogre';
+}
+
+console.log("onMobile:", onMobile);
+
 figlet.defaults({ fontPath: 'https://unpkg.com/figlet/fonts/' });
 figlet.preloadFonts([font], ready);
 
@@ -177,7 +185,12 @@ $.terminal.new_formatter([re, function(_, command, args) {
 
 term.pause();
 function ready() {
-    const welcome_message = render('Terminal Consequences');
+
+    let welcome_message = render('Terminal Consequences');
+
+    if (onMobile){
+        welcome_message = render('Terminal \nConsequences')
+    }
     term.echo(welcome_message);
     term.echo('[[;white;]Welcome to the manor!]\n');
     term.resume();
@@ -190,6 +203,14 @@ function render(text) {
         width: cols,
         whitespaceBreak: true
     });
+}
+
+/**
+ * 
+ * @returns true if on mobile device
+ */
+function isMobileDevice() {
+    return /Mobi|Android/i.test(navigator.userAgent) || window.innerWidth <= 800;
 }
 
 term.on('click', '.command', function() {

@@ -12,3 +12,20 @@
 .command, .directory {
     cursor: pointer;
 }
+
+
+/* For small screens like mobile devices */
+@media only screen and (max-width: 600px) {
+    body, .cmd, .terminal{
+        font-size:30px !important
+    }
+    
+}
+  
+/* For larger screens like desktops */
+@media only screen and (min-width: 601px) {
+    body, .cmd, .terminal{
+        font-size:12px !important
+    }
+}
+  
