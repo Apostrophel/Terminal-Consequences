@@ -27,9 +27,18 @@ const quit_chat_commands = ['!exit', '!chatmode' ]
 const username = localStorage.getItem('username');
 const mainLobbyId = 'mainLobby';
 
+const loginKey = 'isUserLoggedIn';
+const isLoggedIn = localStorage.getItem(loginKey) === 'true';
+
 socket.on('connect', () => {
     console.log('Successfully connected to the Socket.IO server');
     socket.emit('userLogin', username);
+
+    // Emit lobby message only if the user is logging in for the first time
+    if (!isLoggedIn) {
+        socket.emit('lobbyMessage', `<green>Game Lobby: </green>${username} has joined the chat!`);
+        localStorage.setItem(loginKey, 'true'); // Set the flag in localStorage
+    }
 });
 
 socket.on('connect_error', (err) => {
@@ -82,8 +91,10 @@ const commands = {
     logout() {
         localStorage.removeItem('username');
         localStorage.removeItem('token');
+        localStorage.setItem(loginKey, 'false'); // Set the flag in localStorage
         term.echo('You have been logged out successfully, bye!');
         socket.emit('userLogout', username);                                                //TODO: Do this also for disconnect etc ????
+
 
         setTimeout(() => {
             window.location.href = 'index.html';
@@ -188,11 +199,24 @@ const commands = {
     }
 };
 
-socket.on('chatMessage', (msg) => {
-    const new_chat_username = msg.split(' ')[2].split(':')[0] // Extract the username from the msg
+socket.on('chatMessage', (message) => {
+    const new_chat_username = message.split(' ')[2].split(':')[0] // Extract the username from the msg
     if (new_chat_username !== username) {
-        term.echo(msg);
+        term.echo(message);
     }
+});
+
+socket.on('lobbyMessage', (message) => {
+    if(message.includes('joined the chat')){
+        const new_join_username = message.split(' ')[2].split('>')[1];
+        console.log(`${new_join_username}`)
+        if (new_join_username !== username){
+            term.echo(message);
+        }
+    } else {
+        term.echo(message);
+    }
+
 });
 
 socket.on('loadChatHistory', (chatLogs) => {

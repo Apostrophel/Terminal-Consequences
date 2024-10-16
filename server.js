@@ -112,6 +112,9 @@ io.on('connection', (socket) => {
     io.emit('whisper message', user, msg);
   });
 
+  socket.on('lobbyMessage', (message) => {
+    io.emit('lobbyMessage', message);
+  });
    
   // Handle creating a game lobby
   socket.on('creategame', (username, callback) => {
@@ -160,7 +163,7 @@ io.on('connection', (socket) => {
           callback(`Joined game lobby: ${roomId}`);
           rooms[roomId].invited_users = rooms[roomId].invited_users.filter(user => user !== username);                  //Withdraw the invite after user joined
           if(!userAlreadyJoined){
-            io.to(roomId).emit('gameMessage', `<green>Game Lobby: </green>${username} has joined the game lobby!`);   //TODO: issue #31
+            io.to(roomId).emit('gameMessage', `<green>Game Lobby: </green>${username} has joined the game lobby!`); 
           }
       } else {
           callback(`Room ${roomId} does not exist.`);

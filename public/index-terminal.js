@@ -164,8 +164,6 @@ if (onMobile){
     font = 'Ogre';
 }
 
-console.log("onMobile:", onMobile);
-
 figlet.defaults({ fontPath: 'https://unpkg.com/figlet/fonts/' });
 figlet.preloadFonts([font], ready);
 
@@ -205,10 +203,7 @@ function render(text) {
     });
 }
 
-/**
- * 
- * @returns true if on mobile device
- */
+
 function isMobileDevice() {
     return /Mobi|Android/i.test(navigator.userAgent) || window.innerWidth <= 800;
 }
