@@ -315,7 +315,9 @@ app.use((req, res, next) => {
   res.status(404).redirect('/'); // Redirect to the home page
 });
 
-server.listen(port, () => {
+
+
+server.listen(port, '0.0.0.0', () => {
   if(isDevelopment){
     console.log(`Open at: http://localhost:${port}`)
   }else{

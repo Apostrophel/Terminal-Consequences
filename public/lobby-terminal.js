@@ -346,6 +346,7 @@ function ready() {
     }
     socket.emit('requestChatLog', mainLobbyId);
     term.resume();
+    term.focus();
  }
 
 function render(text) {

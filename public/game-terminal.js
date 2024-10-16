@@ -69,17 +69,21 @@ const commands = {
                     if (command_name != null) {
                         term.echo(`No spesific information on ${command_name} \nList of available commands:${commands_formatted_for_help}, ${host_commands_formatted_for_help}.`);
                     } else {
-                        term.echo(`List of available commands: ${commands_formatted_for_help}. Type help *command* for info on spesific command.`);
-                        term.echo(`Host specific commands: ${host_commands_formatted_for_help}.`);
+                        term.echo(`List of available commands:\t ${commands_formatted_for_help}. Type [<white>help</white> *<aqua>command</aqua>*] for info on spesific command.`);
+                        term.echo(`List of in-game commands:\t ${in_game_commands_formatted_for_help}`)
+                        term.echo(`Host specific commands:\t\t ${host_commands_formatted_for_help}.`);
                     }   
                 } else {
 
                     if (command_name != null) {
                         term.echo(`No spesific information on ${command_name} \nList of available commands: ${commands_formatted_for_help}.`);
                     } else {
-                        term.echo(`List of available commands: ${commands_formatted_for_help}. Type help *command* for info on spesific command.`);
+                        term.echo(`List of available commands:\t ${commands_formatted_for_help}. Type help *command* for info on spesific command.`);
+                        term.echo(`List of in-game commands\t: ${in_game_commands_formatted_for_help}`)
+
                     }   
                 }
+                
           }  
     },
     echo(...args) {
@@ -270,6 +274,9 @@ const hostCommands = {
         socket.emit('startGame', roomId, (response) => {
             term.echo(response);
         });
+
+        updateIngameCommands();
+        
     },
     kick(usernameToKick) {
         if (usernameToKick) {
@@ -311,6 +318,41 @@ const hostCommands = {
     },
 };
 
+const gameCommands = {
+    whisperc(...args){     //TODO: character whisper 
+        if (username && args.length > 0) {
+            let message = args.join(' ');
+            let whisper = username + " wishpers " + message;
+            socket.emit('gameMessage', username, roomId || null, whisper);          //TODO: change to charachter name ??
+            
+            let timestamp = new Date().toLocaleTimeString();
+            term.echo(`you gently whisper ${message}`); 
+        } else {
+            term.echo('Please provide a message.');
+        }
+    },
+    
+    shout(...args){
+        if (username && args.length > 0) {
+            let message = args.join(' ');
+            let whisper = username + " shout " + message;
+            socket.emit('gameMessage', username, roomId || null, whisper);          //TODO: change to charachter name ??
+            
+            let timestamp = new Date().toLocaleTimeString();
+            term.echo(`you shout ${message}`); 
+        } else {
+            term.echo('Please provide a message.');
+        }
+    },
+
+    map() {
+
+        renderMap();    //TODO: this
+    },
+
+}
+
+
 // Listen for game messages and display them
 socket.on('gameMessage', (msg) => {
     const username = localStorage.getItem('username');
@@ -350,16 +392,24 @@ socket.on('redirect', (data) => {
 });
 
 const command_list = ['clear'].concat(Object.keys(commands));
+const host_commands_list = ['clear'].concat(Object.keys(hostCommands));
+const ingame_commands_list = ['clear'].concat(Object.keys(gameCommands));
+
 const formatted_list = command_list.map(cmd => {
     return `<white class="command">${cmd}</white>`;
 });
-const commands_formatted_for_help = formatter.format(formatted_list);
 
-const host_commands_list = ['clear'].concat(Object.keys(hostCommands));
 const formatted_host_list = host_commands_list.map(cmd => {
     return `<white class="command">${cmd}</white>`;
 });
-const host_commands_formatted_for_help = formatter.format(formatted_host_list)
+
+const formatted_game_list = ingame_commands_list.map(cmd => {
+    return `<white class="command">${cmd}</white>`;
+});
+
+const commands_formatted_for_help = formatter.format(formatted_list);
+const host_commands_formatted_for_help = formatter.format(formatted_host_list);
+const in_game_commands_formatted_for_help = formatter.format(formatted_game_list);
 
 const any_command_re = new RegExp(`^\s*(${command_list.join('|')})`);
 const re = new RegExp(`^\s*(${command_list.join('|')})(\s?.*)`);
@@ -471,6 +521,17 @@ function echoCommand(line){
     term.echo(line);
 }
 
+function updateIngameCommands(){
+    socket.emit('getRoomData', roomId, (roomData) => {
+        if (roomData.settings.host === username) {
+            Object.assign(commands, hostCommands, gameCommands); // Extend the existing commands object
+        } else {
+            Object.assign(commands, gameCommands);
+        }
+        term.update();
+    });
+}
+
 term.on('click', 'a', function(event) {
     event.preventDefault(); // Prevent default action of the link (which would be navigating to '#')
     
@@ -509,3 +570,29 @@ socket.on('disconnect', () => {                                 //TODO: This dos
     const username = localStorage.getItem('username');
     console.log(`Client disconnected: ${username}`);        
 });
+
+
+
+/*
+* +----------------+                                   +----------------+
+* | Drawing room   |                                   | Dining hall    |
+* |                |                                   |                |
+* |                |                                   |                |
+* |                |                                   |                |
+* |                |                                   |                |
+* |                |-----------------------------------|                |
+* |                | Foyer                             |                |
+* |                |                                   |                |
+* |                |                \ /                |                |
+* |                |                 x <-- you here    |                |
+* |                |                / \                |                |
+* |                |                                   |                |
+* |                |                                   |                |
+* +----------------+----+-------------------------+----+----------------+
+*                       | Entrance      |         |                      
+*                       |               |         |                      
+*                       |               |         |                      
+*                       |               |         |                      
+*                       |               |         |                      
+*                       +-------------------------+                      
+*/
