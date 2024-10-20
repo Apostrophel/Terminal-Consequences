@@ -30,6 +30,7 @@ This project is built with the following dependencies:
 - Node.js (v14.0.0 or later)
 - Express.js (v4.17.1 or later)
 - mySQL2 (v3.11.3 or later)
+Install the above from respective websites. Node inlcudes nmp.
 
 - bcryptjs (v2.4.3)
 - cors (v2.8.5)
@@ -43,4 +44,4 @@ This project is built with the following dependencies:
 - uuid (v10.0.0)
 - ws (v8.18.0)
 
-Please ensure you have the above dependencies installed before proceeding with the installation.
+Install by running the command: npm install bcryptjs cors dotenv ...
