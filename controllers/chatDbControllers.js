@@ -19,6 +19,7 @@ const chatlogSchema = require("../schemas/chatlogSchema");
 const {
    createTable,
    insertRecord,
+   manageMessageLimit,
    deleteRecords,
    getChatLogs,
   } = require("../utils/sqlFunctions");
@@ -46,6 +47,10 @@ const insertChatLog = async (messageId, roomId, userId, message) => {
   try {
     await insertRecord("chat_logs", chatLog);
     console.log("Chat message inserted successfully:", chatLog);
+
+    if (roomId === 'mainLobby'){
+      await manageMessageLimit(roomId);
+    }
   } catch (error) {
     console.error("Error inserting chat message:", error);
     throw error; // Rethrow the error to be handled at a higher level if necessary

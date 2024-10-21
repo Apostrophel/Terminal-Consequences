@@ -23,17 +23,17 @@ const config = require("../db/config");
 
 const pool = mysql.createPool(config);
 
-  const createTable = (schema) => {
-    return new Promise((resolve, reject) => {
-      pool.query(schema, (err, results) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(results);
-        }
-      });
+const createTable = (schema) => {
+  return new Promise((resolve, reject) => {
+    pool.query(schema, (err, results) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(results);
+      }
     });
-  };
+  });
+};
 
 const checkRecordExists = (tableName, column, value) => {
   return new Promise((resolve, reject) => {
@@ -57,6 +57,32 @@ const insertRecord = (tableName, record) => {
       if (err) {
         reject(err);
       } else {
+        resolve(results);
+      }
+    });
+  });
+};
+
+// Function to delete older messages if the count exceeds 200 in 'lobbyId'
+const manageMessageLimit = (roomId) => {
+  return new Promise((resolve, reject) => {
+    const deleteOldMessagesQuery = `
+      DELETE FROM chat_logs 
+      WHERE messageId NOT IN (
+        SELECT messageId FROM (
+          SELECT messageId FROM chat_logs 
+          WHERE roomId = ? 
+          ORDER BY timestamp DESC LIMIT 200
+        ) as recent
+      ) AND roomId = ?;
+      `;
+
+    pool.query(deleteOldMessagesQuery, [roomId, roomId], (err, results) => {
+      if (err) {
+        console.error('Error deleting old messages:', err);
+        reject(err);
+      } else {
+        console.log('Old messages deleted, keeping only the latest 200 for room:', roomId);
         resolve(results);
       }
     });
@@ -102,6 +128,7 @@ module.exports = {
    createTable,
    checkRecordExists,
    insertRecord,
+   manageMessageLimit,
    deleteRecords,
    getChatLogs,
 };
