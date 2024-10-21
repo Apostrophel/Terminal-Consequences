@@ -27,6 +27,15 @@ const {
    insertRecord,
   } = require("../utils/sqlFunctions");
 
+// Helper function to generate a random hex color
+const generateRandomColor = () => {
+  const letters = '0123456789ABCDEF';
+  let color = '#';
+  for (let i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+};
 
 const generateAccessToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -47,6 +56,15 @@ const register = async (req, res) => {
     userId: uuidv4(),
     username,
     password: hashedPassword,
+    // user_settings: {
+    //   user_colour: generateRandomColor(),  // Assign random color
+      
+    // },
+    user_settings: JSON.stringify({       //  retrieve by: const settings = JSON.parse(existingUser.user_settings);
+        user_colour: generateRandomColor(),
+        //user_number: generateRandomNumber(), //TODO: add future user settings to be initiated here.
+    }),
+     
   };
 
   try {
@@ -100,9 +118,14 @@ const login = async (req, res) => {
       if (passwordMatch) {
         // Successful login
         console.log('Login successful for user:', existingUser.userId);
+
+        const userSettings = JSON.parse(existingUser.user_settings);
+        const userColour = userSettings.user_colour; // Get the user color from the parsed settings
+
         return res.status(200).json({
           userId: existingUser.userId,
           username: existingUser.username,
+          userColour: userColour,
           token: generateAccessToken(existingUser.userId),
         });
       } else {

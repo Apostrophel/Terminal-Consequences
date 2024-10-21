@@ -65,11 +65,12 @@ io.on('connection', (socket) => {
   socket.emit('connectionStatus', 'connecting');
 
   let username; // Declare username for this connection
-  socket.on('userLogin', async (user) => {
+  socket.on('userLogin', async (user, userColour) => {
     username = user; // Assign the username when the user logs in
-    console.log("New client connected: ", username, ". Users: ", users)
-    users[username] = socket.id;  
+    //users[username] = socket.id;  
+    users[username] = { id: socket.id, color: userColour }; 
     socket.emit('connectionStatus', 'connected');
+    console.log("New client connected: ", username, ". Users: ", users)
   });
 
 
@@ -93,17 +94,16 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('chatMessage',  async (user_name, room_id, msg) => {
+  socket.on('chatMessage',  async (user_name, user_colour, room_id, message) => {
     const messageId = uuidv4(); // or use any other unique ID generator
 
     try {
-      await insertChatLog(messageId, room_id, user_name, msg); // Pass parameters in the correct order
+      await insertChatLog(messageId, room_id, user_name, message); // Pass parameters in the correct order
     } catch (error) {
       console.error("Error saving chat log:", error);
     }
 
-    //let timestamp = new Date().toLocaleTimeString();
-    io.emit('chatMessage', user_name, msg);
+    io.emit('chatMessage', user_name, user_colour, message);
   });
 
   socket.on('gameMessage', async (user_name, room_id, message) => {
@@ -156,7 +156,7 @@ io.on('connection', (socket) => {
 
   // Handle inviting a user from a game lobby
   socket.on('invite', (roomId, invitedUsername, hostUser, callback) => {
-    const invitedSocketId = users[invitedUsername];
+    const invitedSocketId = users[invitedUsername]; //TODO: .id
     if (invitedSocketId) {
         io.to(invitedSocketId).emit('invitation', hostUser,  roomId);
         rooms[roomId].invited_users.push(invitedUsername);

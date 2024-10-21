@@ -133,7 +133,13 @@ function user_login(username, password){
     .then(result => {
         if (result.token) {
             term.echo('Login successful! Token: ' + result.token);
-            localStorage.setItem('username', result.username);                
+            localStorage.setItem('username', result.username);   
+            
+            
+            //TODO: query for user colour 
+            //const userColour ='#FFFFFF';
+            localStorage.setItem('user_colour', result.userColour);                
+            
             window.location.href = 'lobby.html';
         } else {
             term.error(result.error || 'Login failed!');

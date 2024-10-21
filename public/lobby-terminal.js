@@ -25,6 +25,7 @@ let chatMode = false;
 let timestamp = new Date().toLocaleTimeString();
 const quit_chat_commands = ['!exit', '!chatmode' ]
 const username = localStorage.getItem('username');
+const userColour = localStorage.getItem('user_colour')
 const mainLobbyId = 'mainLobby';
 
 const loginKey = 'isUserLoggedIn';
@@ -32,7 +33,10 @@ const isLoggedIn = localStorage.getItem(loginKey) === 'true';
 
 socket.on('connect', () => {
     console.log('Successfully connected to the Socket.IO server');
-    socket.emit('userLogin', username);
+
+
+
+    socket.emit('userLogin', username, userColour);
 
     // Emit lobby message only if the user is logging in for the first time
     if (!isLoggedIn) {
@@ -108,10 +112,10 @@ const commands = {
     say(...args) {
         if (username && args.length > 0) {
             let message = args.join(' ');
-            socket.emit('chatMessage', username, mainLobbyId || null, message);
+            socket.emit('chatMessage', username, userColour, mainLobbyId || null, message);
             
             let timestamp = new Date().toLocaleTimeString();
-            term.echo(`${timestamp} ${username}:\t\t${message}`); 
+            term.echo(`${timestamp} [[;${userColour};]${username}]:\t\t${message}`); 
 
         } else if (args.length === 0) {
             term.echo('Please provide a message.');
@@ -199,10 +203,10 @@ const commands = {
     }
 };
 
-socket.on('chatMessage', (user_id, message) => {
+socket.on('chatMessage', (user_id, user_colour, message) => {
     if (user_id !== username) {
         let local_timestamp = new Date().toLocaleTimeString();
-        term.echo(`${local_timestamp} ${user_id}:\t\t${message}`); //TODO: This sends even username USERID is not USERNAME
+        term.echo(`${local_timestamp} [[;${user_colour};]${user_id}]:\t\t${message}`);  
     }
 });
 
@@ -339,6 +343,7 @@ function ready() {
     }
     term.echo(welcome_message);
     term.echo(`<white>YOU ARE LOGGED IN AS </white> <red>${username}</red> <white> ... Welcome to the chat.</white> \n`);
+    
     if (socket.connected) {
         term.echo("<yellow>Connected!</yellow>");       //TODO: this is not working as intened ?
     } else {
