@@ -199,10 +199,10 @@ const commands = {
     }
 };
 
-socket.on('chatMessage', (message) => {
-    const new_chat_username = message.split(' ')[2].split(':')[0] // Extract the username from the msg
-    if (new_chat_username !== username) {
-        term.echo(message);
+socket.on('chatMessage', (user_id, message) => {
+    if (user_id !== username) {
+        let local_timestamp = new Date().toLocaleTimeString();
+        term.echo(`${local_timestamp} ${user_id}:\t\t${message}`); //TODO: This sends even username USERID is not USERNAME
     }
 });
 

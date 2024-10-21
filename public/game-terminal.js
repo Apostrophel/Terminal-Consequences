@@ -354,12 +354,21 @@ const gameCommands = {
 
 
 // Listen for game messages and display them
-socket.on('gameMessage', (msg) => {
+socket.on('gameMessage', (user_name, message) => {
     const username = localStorage.getItem('username');
-    console.log(msg)
-    const new_chat_username = msg.split(' ')[2].split(':')[0] // Extract the username from the msg
-    if (new_chat_username !== username) {
-        term.echo(msg);
+ 
+    //const new_chat_username = msg.split(' ')[2].split(':')[0] // Extract the username from the msg
+
+    if (user_name !== username) {
+        let loacal_timestamp = new Date().toLocaleTimeString();
+        const chatMessage = `${loacal_timestamp}  ${user_name}:\t\t${message}`;
+        term.echo(chatMessage);
+    }
+});
+
+socket.on('joinMessage', (user_name, message) => {
+    if (user_name !== username){
+        term.echo(message);
     }
 });
 socket.on('gameMessageAlert', (msg) => {
