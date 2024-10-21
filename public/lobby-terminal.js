@@ -298,8 +298,8 @@ const term = $('body').terminal(function(command, term) {
             term.set_prompt(`<white>${username}</white>@tq.lobby> `)
         } else {
             let timestamp = new Date().toLocaleTimeString();
-            term.echo(`${timestamp} ${username}:\t\t${command}`); 
-            socket.emit('chatMessage', username, mainLobbyId || null, command); // Ensure roomId is not undefined
+            term.echo(`${timestamp} [[;${userColour};]${username}]:\t\t${command}`); 
+            socket.emit('chatMessage', username, userColour, mainLobbyId || null, command); // Ensure roomId is not undefined
         }
     } else {
         const parts = command.trim().split(/\s+/);
