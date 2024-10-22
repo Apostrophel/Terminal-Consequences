@@ -67,8 +67,8 @@ io.on('connection', (socket) => {
   let username; // Declare username for this connection
   socket.on('userLogin', async (user, userColour) => {
     username = user; // Assign the username when the user logs in
-    //users[username] = socket.id;  
-    users[username] = { id: socket.id, color: userColour }; 
+    users[username] = socket.id;  
+    //users[username] = { id: socket.id, color: userColour }; 
     socket.emit('connectionStatus', 'connected');
     console.log("New client connected: ", username, ". Users: ", users)
   });
@@ -88,17 +88,6 @@ io.on('connection', (socket) => {
   socket.on('requestChatLog', async (roomId) => {
     try {
       const chatLogs = await retrieveChatLogs(roomId); // Retrieve chat logs from the database
-
-
-      // const updatedChatLogs = chatLogs.map((chat) => {
-      //   const user_colour = '#FFFFFF';
-      //   return {
-      //       ...chat, // Spread the existing chat object
-      //       chat_user_colour: user_colour // Add the new property
-      //   };
-      // });
-
-  
       socket.emit('loadChatHistory', chatLogs); // Emit the chat logs to the client
     } catch (error) {
       console.error("Error retrieving chat logs:", error);
@@ -106,31 +95,23 @@ io.on('connection', (socket) => {
   });
 
   socket.on('chatMessage',  async (user_name, user_colour, room_id, message) => {
-    const messageId = uuidv4(); // or use any other unique ID generator
-
+    const messageId = uuidv4();
     try {
       await insertChatLog(messageId, room_id, user_name, message); // Pass parameters in the correct order
     } catch (error) {
       console.error("Error saving chat log:", error);
     }
-
     io.emit('chatMessage', user_name, user_colour, message);
   });
 
-  socket.on('gameMessage', async (user_name, room_id, message) => {
-    //console.log("Received message:", { user_name, room_id, msg }); // Log the received parameters
-    const messageId = uuidv4(); // or use any other unique ID generator
-    
+  socket.on('gameMessage', async (user_name, user_colour, room_id, message) => {
+    const messageId = uuidv4();
     try {
       await insertChatLog(messageId, room_id, user_name, message); // Pass parameters in the correct order
     } catch (error) {
       console.error("Error saving game chat log:", error);
     }
-
-    //let timestamp = new Date().toLocaleTimeString();
-    //const chatMessage = `${timestamp}  ${user_name}:\t\t${msg}`;
-
-    io.to(room_id).emit('gameMessage', user_name, message);
+    io.to(room_id).emit('gameMessage', user_name, user_colour, message);
 });
 
 
@@ -138,8 +119,8 @@ io.on('connection', (socket) => {
     io.emit('whisper message', user, msg);
   });
 
-  socket.on('lobbyMessage', (message) => {
-    io.emit('lobbyMessage', message);
+  socket.on('lobbyMessage', (user_name, user_colour, message_type) => {
+    io.emit('lobbyMessage', user_name, user_colour, message_type);
   });
    
   // Handle creating a game lobby

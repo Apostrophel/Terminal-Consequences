@@ -25,8 +25,9 @@ const urlParams = new URLSearchParams(window.location.search);
 const roomId = urlParams.get('roomId');
 console.log(roomId);
 
-const username = localStorage.getItem('username');  
-const quit_chat_commands = ['!exit', '!chatmode' ]
+const username = localStorage.getItem('username');
+const userColour = localStorage.getItem('user_colour');
+const quit_chat_commands = ['!exit', '!chatmode' ];
 let chatMode = false;
 let timestamp = new Date().toLocaleTimeString();
 
@@ -151,13 +152,13 @@ const commands = {
 
 
     say(...args) {
-        const username = localStorage.getItem('username');
         if (username && args.length > 0) {
             let message = args.join(' ');
-            socket.emit('gameMessage', username, roomId || null, message);          //TODO: change to charachter name ??
-            
+            socket.emit('gameMessage', username, userColour, roomId || null, message);          //TODO: change to charachter name ??
+
             let timestamp = new Date().toLocaleTimeString();
-            term.echo(`${timestamp} ${username}:\t\t${message}`); 
+            term.echo(`${timestamp} [[;${userColour};]${username}]:\t\t${message}`); 
+
 
         } else if (args.length === 0) {
             term.echo('Please provide a message.');
@@ -354,15 +355,11 @@ const gameCommands = {
 
 
 // Listen for game messages and display them
-socket.on('gameMessage', (user_name, message) => {
+socket.on('gameMessage', (user_name, user_colour, message) => {
     const username = localStorage.getItem('username');
- 
-    //const new_chat_username = msg.split(' ')[2].split(':')[0] // Extract the username from the msg
-
     if (user_name !== username) {
-        let loacal_timestamp = new Date().toLocaleTimeString();
-        const chatMessage = `${loacal_timestamp}  ${user_name}:\t\t${message}`;
-        term.echo(chatMessage);
+        let local_timestamp = new Date().toLocaleTimeString();
+        term.echo(`${local_timestamp} [[;${user_colour};]${user_name}]:\t\t${message}`);  
     }
 });
 
@@ -379,9 +376,11 @@ socket.on('loadChatHistory', (chatLogs) => {
     if (chatLogs && Array.isArray(chatLogs)) {
         chatLogs.reverse().forEach(log => {
             const log_username = log.userId;
+            const userid_colour = log.userColour;
             const log_message = log.message;
             const log_timestamp = new Date(log.timestamp).toLocaleTimeString(); // Assuming log has a timestamp
-            term.echo(`${log_timestamp} ${log_username}:\t\t${log_message}`);
+            term.echo(`${log_timestamp} [[;${userid_colour};]${log_username}]:\t\t${log_message}`);
+
         });
     } else {
         term.echo('No chat logs found.');

@@ -38,7 +38,7 @@ socket.on('connect', () => {
 
     // Emit lobby message only if the user is logging in for the first time
     if (!isLoggedIn) {
-        socket.emit('lobbyMessage', `<green>Game Lobby: </green>${username} has joined the chat!`);
+        socket.emit('lobbyMessage', username, userColour, 'userJoined');
         localStorage.setItem(loginKey, 'true'); // Set the flag in localStorage
     }
 });
@@ -208,15 +208,18 @@ socket.on('chatMessage', (user_id, user_colour, message) => {
     }
 });
 
-socket.on('lobbyMessage', (message) => {
-    if(message.includes('joined the chat')){
-        const new_join_username = message.split(' ')[2].split('>')[1];
-        console.log(`${new_join_username}`)
-        if (new_join_username !== username){
-            term.echo(message);
+socket.on('lobbyMessage', (user_name, user_colour, message_type) => {
+    console.log(`${message_type}: <green>Game Lobby: </green>[[;${user_colour};]${user_name}] has joined the chat!`)
+    if(message_type === 'userJoined'){
+        if (user_name !== username){
+            term.echo(`<green>Game Lobby: </green>[[;${user_colour};]${user_name}] has joined the chat!`);
         }
+
+    //else if (message_type === '...')
+
+    // sll other cases:
     } else {
-        term.echo(message);
+        term.echo(message_type);
     }
 
 });
