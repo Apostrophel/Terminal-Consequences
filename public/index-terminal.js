@@ -133,11 +133,8 @@ function user_login(username, password){
     .then(result => {
         if (result.token) {
             term.echo('Login successful! Token: ' + result.token);
+            
             localStorage.setItem('username', result.username);   
-            
-            
-            //TODO: query for user colour 
-            //const userColour ='#FFFFFF';
             localStorage.setItem('user_colour', result.userColour);                
             
             window.location.href = 'lobby.html';
@@ -220,8 +217,14 @@ term.on('click', '.command', function() {
  });
 
 
-// Logic for recording the keystrokes "login " and mask password after "login username ***":
+// Below is Logic for recording the keystrokes "login " and mask password after "login username ***":  
+//TODO: this needs to also not be stored in command history. Issue #11
+//TODO: Also needs to handle login tab  autocomplete issue #29
+//TODO: Password spaces handling issue #28
 
+//////////////////////////////////////////
+//          LOGIN MASKING LOGIC         //
+//////////////////////////////////////////
 let inputBuffer = '';
 let user_pass_buffer = '';
 let username_temp = '';
