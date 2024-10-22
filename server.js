@@ -16,7 +16,7 @@ const connectDB = require("./db/db");
 const http = require('http');
 const socketIo = require('socket.io');
 const authRoutes = require("./routes/authRoutes");
-const { initializeChatLogs, insertChatLog, deleteChatLogsByRoom, retrieveChatLogs } = require('./controllers/chatDbControllers');
+const { initializeChatLogs, insertChatLog, deleteChatLogsByRoom, retrieveChatLogs, retreiveUserSettings } = require('./controllers/chatDbControllers');
 const port = process.env.PORT;
 const app = express();
 const server = http.createServer(app);
@@ -87,10 +87,23 @@ io.on('connection', (socket) => {
 
   socket.on('requestChatLog', async (roomId) => {
     try {
-      const chatLogs = await retrieveChatLogs(roomId); // Retrieve chat logs from the database
-      socket.emit('loadChatHistory', chatLogs); // Emit the chat logs to the client
+      const chatLogs = await retrieveChatLogs(roomId); 
+      socket.emit('loadChatHistory', chatLogs);  
     } catch (error) {
       console.error("Error retrieving chat logs:", error);
+    }
+  });
+
+  socket.on('requestUserSettings', async ( user_name, callback) => {
+    try {
+      const user_settings = await retreiveUserSettings(user_name); 
+      //TODO: JSON stuff here ?
+      const readableUserSettings = JSON.stringify(user_settings, null, 2);
+      
+
+      callback(readableUserSettings);
+    } catch (error){
+      console.error('Error retreiving user data', error)
     }
   });
 

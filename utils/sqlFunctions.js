@@ -144,6 +144,25 @@ const getChatLogs = (roomId) => {
   });
 };
 
+const getUserSettings = (userName) => {
+  return new Promise((resolve, reject) => {
+    const query = `
+      SELECT user_settings
+      FROM users
+      WHERE username = ?
+    `;
+
+    pool.query(query, [userName], (err, results) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(results);
+      }
+    });
+
+  });
+}
+
 module.exports = {
    createTable,
    checkRecordExists,
@@ -151,4 +170,5 @@ module.exports = {
    manageMessageLimit,
    deleteRecords,
    getChatLogs,
+   getUserSettings,
 };

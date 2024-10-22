@@ -22,6 +22,7 @@ const {
    manageMessageLimit,
    deleteRecords,
    getChatLogs,
+   getUserSettings,
   } = require("../utils/sqlFunctions");
 
 // Function to initialize the chat logs table
@@ -57,6 +58,16 @@ const insertChatLog = async (messageId, roomId, userId, message) => {
   }
 };
 
+const retreiveUserSettings = async (user_name) => {
+  try {
+    const logs = await getUserSettings(user_name);
+    return logs;
+  } catch (error) {
+    console.error("Error retrieving chat logs:", error);
+    throw error; // Rethrow the error to be handled at a higher level if necessary
+  }
+};
+
 // Function to retrieve chat logs for a specific room
 const retrieveChatLogs = async (roomId) => {
   try {
@@ -82,6 +93,7 @@ const deleteChatLogsByRoom = async (roomId) => {
 module.exports = {
   initializeChatLogs,
   insertChatLog,
+  retreiveUserSettings,
   retrieveChatLogs,
   deleteChatLogsByRoom,
 };

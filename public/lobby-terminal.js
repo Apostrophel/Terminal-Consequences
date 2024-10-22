@@ -198,7 +198,13 @@ const commands = {
                 window.location.href = `game.html?roomId=${room_id}`;
             }
         });
-    }
+    },
+
+    settings(){
+        socket.emit('requestUserSettings', username, (response) => {
+            term.echo(response);
+        });
+    },
 };
 
 socket.on('chatMessage', (user_id, user_colour, message) => {
