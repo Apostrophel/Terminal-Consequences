@@ -110,9 +110,29 @@ const deleteRecords = (tableName, conditions) => {
   });
 };
 
+// const getChatLogs = (roomId) => {
+//   return new Promise((resolve, reject) => {
+//     const query = `SELECT * FROM chat_logs WHERE roomId = ? ORDER BY timestamp DESC LIMIT 25`;
+
+//     pool.query(query, [roomId], (err, results) => {
+//       if (err) {
+//         reject(err);
+//       } else {
+//         resolve(results);
+//       }
+//     });
+//   });
+// };
 const getChatLogs = (roomId) => {
-  return new Promise((resolve, reject) => {
-    const query = `SELECT * FROM chat_logs WHERE roomId = ? ORDER BY timestamp DESC LIMIT 25`; // Retrieves the latest 50 messages
+  return new Promise((resolve, reject) => {               //TODO:? the substring query is a workarround because MySQL verion is 5.5 and not 5.7 and above. Making it unable to use JSON_EXTRACT...
+    const query = `
+      SELECT chat_logs.*,         
+             SUBSTRING_INDEX(SUBSTRING_INDEX(users.user_settings, '"user_colour":"', -1), '"', 1) AS userColour   
+      FROM chat_logs 
+      JOIN users ON chat_logs.userId = users.username 
+      WHERE chat_logs.roomId = ? 
+      ORDER BY chat_logs.timestamp DESC 
+      LIMIT 25`;
 
     pool.query(query, [roomId], (err, results) => {
       if (err) {

@@ -10,7 +10,7 @@
  * // Example of terminal commands in the lobby:
  * > list users        // Displays a list of users currently in the lobby.
  * > creategame        // Creates a new game room with a randomly generated id.
- * > join game1        // Joins the game room called "game1".
+ * > join game1        // Joins the game room with id "game1" (if the user is invited).
  * > say Hello!        // Sends a chat message "Hello!" to other users in the lobby.
  */
 
@@ -33,8 +33,6 @@ const isLoggedIn = localStorage.getItem(loginKey) === 'true';
 
 socket.on('connect', () => {
     console.log('Successfully connected to the Socket.IO server');
-
-
 
     socket.emit('userLogin', username, userColour);
 
@@ -227,9 +225,10 @@ socket.on('loadChatHistory', (chatLogs) => {
     if (chatLogs && Array.isArray(chatLogs)) {
         chatLogs.reverse().forEach(log => {
             const log_username = log.userId;
+            const userid_colour = log.userColour;
             const log_message = log.message;
             const log_timestamp = new Date(log.timestamp).toLocaleTimeString(); // Assuming log has a timestamp
-            term.echo(`${log_timestamp} ${log_username}:\t\t${log_message}`);
+            term.echo(`${log_timestamp} [[;${userid_colour};]${log_username}]:\t\t${log_message}`);
         });
     } else {
         term.echo('No chat logs found.');
@@ -314,7 +313,7 @@ const term = $('body').terminal(function(command, term) {
         if (commands[cmd]) {
             commands[cmd](...args);
         } else {
-            term.echo(`Unknown command: ${cmd}`);
+            term.echo(`<red>Unknown command</red>: ${cmd}`);
         }
     }
 }, {
@@ -342,7 +341,7 @@ function ready() {
         welcome_message = render('Terminal\nConsequences')
     }
     term.echo(welcome_message);
-    term.echo(`<white>YOU ARE LOGGED IN AS </white> <red>${username}</red> <white> ... Welcome to the chat.</white> \n`);
+    term.echo(`<white>YOU ARE LOGGED IN AS </white> [[;${userColour};]${username}]<white> ... Welcome to the chat.</white> \n`);
     
     if (socket.connected) {
         term.echo("<yellow>Connected!</yellow>");       //TODO: this is not working as intened ?

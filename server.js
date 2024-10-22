@@ -88,6 +88,17 @@ io.on('connection', (socket) => {
   socket.on('requestChatLog', async (roomId) => {
     try {
       const chatLogs = await retrieveChatLogs(roomId); // Retrieve chat logs from the database
+
+
+      // const updatedChatLogs = chatLogs.map((chat) => {
+      //   const user_colour = '#FFFFFF';
+      //   return {
+      //       ...chat, // Spread the existing chat object
+      //       chat_user_colour: user_colour // Add the new property
+      //   };
+      // });
+
+  
       socket.emit('loadChatHistory', chatLogs); // Emit the chat logs to the client
     } catch (error) {
       console.error("Error retrieving chat logs:", error);
