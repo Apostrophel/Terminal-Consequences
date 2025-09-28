@@ -167,7 +167,14 @@ if (onMobile){
     font = 'Ogre';
 }
 
-figlet.defaults({ fontPath: 'https://unpkg.com/figlet/fonts/' });
+figlet.defaults({ fontPath: 'https://unpkg.com/figlet/fonts' });
+// Add a timeout fallback in case font loading fails
+setTimeout(() => {
+    if (term.is_paused()) {
+        console.log('Font loading timed out, using fallback');
+        ready();
+    }
+}, 3000);
 figlet.preloadFonts([font], ready);
 
 // Set up jQuery Terminal:
@@ -186,25 +193,25 @@ $.terminal.new_formatter([re, function(_, command, args) {
 
 term.pause();
 function ready() {
-
-    let welcome_message = render('Terminal Consequences');
-
-    if (onMobile){
-        welcome_message = render('Terminal \nConsequences')
-    }
-    term.echo(welcome_message);
-    term.echo('[[;white;]Welcome to the manor!]\n');
-    term.resume();
- }
-
-function render(text) {
-    const cols = term.cols();
-    return figlet.textSync(text, {
+    const text = onMobile ? 'Terminal \nConsequences' : 'Terminal Consequences';
+    
+    figlet(text, {
         font: font,
-        width: cols,
+        width: term.cols(),
         whitespaceBreak: true
+    }, function(err, data) {
+        if (err) {
+            console.log('Figlet error:', err);
+            // Fallback to simple text
+            term.echo('Terminal Consequences');
+        } else {
+            term.echo(data);
+        }
+        term.echo('[[;white;]Welcome to the manor!]\n');
+        term.resume();
     });
 }
+
 
 
 function isMobileDevice() {
