@@ -16,7 +16,7 @@
 
 // Determine if we are in development or production based on the window location
 const isDevelopment = window.location.hostname === 'localhost'; 
-const socket = io(isDevelopment ? 'http://localhost:5000' : 'https://terminal-6xn7.onrender.com', {
+const socket = io(isDevelopment ? 'http://localhost:3306' : 'https://terminal-6xn7.onrender.com', {
     transports: ['websocket', 'polling'] // Use both websocket and polling transports
 });
 
@@ -433,7 +433,14 @@ if (onMobile){
     font = 'Ogre';
 }
 
-figlet.defaults({ fontPath: 'https://unpkg.com/figlet/fonts/' });
+figlet.defaults({ fontPath: 'https://unpkg.com/figlet/fonts' });
+// Add a timeout fallback in case font loading fails
+setTimeout(() => {
+    if (term.is_paused()) {
+        console.log('Font loading timed out, using fallback');
+        ready();
+    }
+}, 3000);
 figlet.preloadFonts([font], ready);
 
 // Set up jQuery Terminal:
@@ -490,29 +497,37 @@ function ready() {
     
     socket.emit('getRoomData', roomId, (roomData) => {
         lobby_name = roomData.settings.gameName;
-        let welcome_message = render('Terminal Consequences: ');
-        if (onMobile){
-            welcome_message = render('Terminal\nConsequences:')
-        }
+        const text = onMobile ? 'Terminal\nConsequences:' : 'Terminal Consequences: ';
+        
+        figlet(text, {
+            font: font,
+            width: term.cols(),
+            whitespaceBreak: true
+        }, function(err, data) {
+            if (err) {
+                console.log('Figlet error:', err);
+                // Fallback to simple text
+                term.echo('Terminal Consequences: ');
+            } else {
+                term.echo(data);
+            }
+            term.echo(`<white> User: </white> <red>${username}</red> <white> ... Welcome to Game: ${lobby_name}.</white> \n`);
+            if (socket.connected) {
+                term.echo("<yellow>Connected!</yellow>");       //TODO: this is not working as intened ?
+            } else {
+                term.echo("<yellow>Connecting... </yellow>"); 
+            }
 
-        term.echo(welcome_message);
-        term.echo(`<white> User: </white> <red>${username}</red> <white> ... Welcome to Game: ${lobby_name}.</white> \n`);
-        if (socket.connected) {
-            term.echo("<yellow>Connected!</yellow>");       //TODO: this is not working as intened ?
-        } else {
-            term.echo("<yellow>Connecting... </yellow>"); 
-        }
-
-        if(roomData.settings.host === username){
-            localStorage.setItem('current_role', 'host');
-        } else {
-            localStorage.setItem('current_role', 'guest');
-        }
-        if (roomData.settings.host === username) {
-            term.echo('<green>Game Lobby: </green>You are the host! ');
-            addHostCommands();   
-        }
-
+            if(roomData.settings.host === username){
+                localStorage.setItem('current_role', 'host');
+            } else {
+                localStorage.setItem('current_role', 'guest');
+            }
+            if (roomData.settings.host === username) {
+                term.echo('<green>Game Lobby: </green>You are the host! ');
+                addHostCommands();   
+            }
+        });
     });
 
     socket.emit('getRoomUsers', roomId, (callback) => {
@@ -558,15 +573,6 @@ function addHostCommands() {
 
 function isMobileDevice() {
     return /Mobi|Android/i.test(navigator.userAgent) || window.innerWidth <= 800;
-}
-
-function render(text) {
-    const cols = term.cols();
-    return figlet.textSync(text, {
-        font: font,
-        width: cols,
-        whitespaceBreak: true
-    });
 }
 
 term.on('click', '.command', function() {
